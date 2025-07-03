@@ -29,6 +29,12 @@ enum FormStatus {
   CLOSED
 }
 
+enum Designation {
+  HoD
+  Asst_Prof
+  Lab_Asst
+}
+
 model OTP {
   id        String   @id @default(uuid())
   email     String
@@ -140,12 +146,12 @@ model Subject {
 model Faculty {
   id                String              @id @default(uuid())
   name              String
-  abbreviation      String              @unique
+  abbreviation      String?
   email             String              @unique
-  designation       String
+  designation       Designation
   seatingLocation   String              @map("seating_location")
   image             String?
-  joiningDate       DateTime            @map("joining_date")
+  joiningDate       DateTime?           @map("joining_date")
   departmentId      String              @map("department_id")
   department        Department          @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   mentoredDivisions Division[]          @relation("DivisionMentors")

@@ -4,7 +4,7 @@
 
 1. Dynamic Faculty Matrix Extraction Logic. -- Done!
 
-2. Fix the logic where uploading a new excel file overwrites the DB with new entries.(Identify the new rows/data and update only the required portion)
+2. Fix the logic where uploading a new excel file overwrites the DB with new entries.(Identify the new rows/data and update only the required portion) -- Done!
 
 3. Batch (2022-26) Additions to the whole DB.
 
