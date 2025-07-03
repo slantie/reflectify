@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
-import { sendFormAccessEmail } from '../services/emailService';
+import { sendFormAccessEmail } from '../services/emailService'; // Assuming this path is correct
 
 const prisma = new PrismaClient();
 
@@ -81,8 +81,9 @@ export const generateForms = async (
             title: generateFormTitle(allocations[0].division),
             status: 'DRAFT',
             startDate: new Date(),
-            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
             accessHash: generateHash(),
+            isDeleted: false, // Explicitly set to false on creation
             questions: {
               create: generateQuestionsForAllSubjects(allocations),
             },
@@ -122,6 +123,9 @@ export const getAllForms = async (
 ): Promise<void> => {
   try {
     const forms = await prisma.feedbackForm.findMany({
+      where: {
+        isDeleted: false, // Only fetch forms that are not soft-deleted
+      },
       include: {
         questions: true,
         division: true,
@@ -151,7 +155,10 @@ export const getFormById = async (
   try {
     const { id } = req.params;
     const form = await prisma.feedbackForm.findUnique({
-      where: { id },
+      where: {
+        id,
+        isDeleted: false, // Only fetch if not soft-deleted
+      },
       include: {
         questions: {
           include: {
@@ -165,7 +172,9 @@ export const getFormById = async (
     });
 
     if (!form) {
-      res.status(404).json({ success: false, error: 'Form not found' });
+      res
+        .status(404)
+        .json({ success: false, error: 'Form not found or is deleted' });
       return;
     }
 
@@ -188,7 +197,10 @@ export const updateForm = async (
     const { title, status, startDate, endDate } = req.body;
 
     const updatedForm = await prisma.feedbackForm.update({
-      where: { id },
+      where: {
+        id,
+        isDeleted: false, // Ensure we are not updating a soft-deleted form
+      },
       data: {
         title,
         status,
@@ -222,17 +234,72 @@ export const deleteForm = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    await prisma.feedbackForm.delete({
-      where: { id },
+
+    // Use a transaction to ensure atomicity for both updates.
+    await prisma.$transaction(async (tx) => {
+      // 1. Soft delete the FeedbackForm record
+      // This will prevent it from appearing in default queries and mark it as 'deleted'.
+      // Optionally, you might want to set its status to 'CLOSED' or similar.
+      await tx.feedbackForm.update({
+        where: { id },
+        data: {
+          isDeleted: true, // Mark the form as soft-deleted
+          status: 'CLOSED', // Optional: Set status to CLOSED when soft-deleted
+        },
+      });
+
+      // 2. Find all StudentResponse IDs associated with this form
+      // These responses will also be soft-deleted by cascade, but we need their IDs for FeedbackSnapshot
+      const studentResponseIds = await tx.studentResponse.findMany({
+        where: { formId: id },
+        select: { id: true },
+      });
+
+      // 3. Update all FeedbackSnapshot entries linked to this form or its responses,
+      // setting formDeleted to true. This preserves analytical data.
+      await tx.feedbackSnapshot.updateMany({
+        where: {
+          OR: [
+            { formId: id }, // Direct link to the form being soft-deleted
+            {
+              originalStudentResponseId: {
+                in: studentResponseIds.map((sr) => sr.id),
+              },
+            }, // Link via original StudentResponse
+          ],
+        },
+        data: {
+          formDeleted: true, // Ensure this is set to true
+        },
+      });
+
+      // 4. Soft delete related FeedbackQuestions (if not already cascaded by FeedbackForm soft delete)
+      // If onDelete: Cascade on FeedbackForm's questions relation handles this, this step might be redundant.
+      // However, for explicit soft-deletion of questions, it's good to include.
+      await tx.feedbackQuestion.updateMany({
+        where: { formId: id },
+        data: { isDeleted: true },
+      });
+
+      // 5. Soft delete related StudentResponses (if not already cascaded by FeedbackForm soft delete)
+      // Similar to questions, if cascade handles it, this is redundant.
+      await tx.studentResponse.updateMany({
+        where: { formId: id },
+        data: { isDeleted: true },
+      });
     });
 
     res.status(200).json({
       success: true,
-      message: 'Form deleted successfully',
+      message:
+        'Form soft-deleted and associated snapshot entries marked as deleted successfully',
     });
-  } catch (error) {
-    console.error('Error deleting form:', error);
-    res.status(500).json({ success: false, error: 'Error deleting form' });
+  } catch (error: any) {
+    console.error('Error soft-deleting form:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error soft-deleting form',
+    });
   }
 };
 
@@ -243,7 +310,10 @@ export const addQuestionToForm = async (
   try {
     const { id } = req.params;
     const updatedForm = await prisma.feedbackForm.update({
-      where: { id },
+      where: {
+        id,
+        isDeleted: false, // Ensure we are not adding questions to a soft-deleted form
+      },
       data: {
         questions: {
           create: {
@@ -255,6 +325,7 @@ export const addQuestionToForm = async (
             type: req.body.type,
             isRequired: req.body.isRequired,
             displayOrder: req.body.displayOrder,
+            isDeleted: false, // Explicitly set to false on creation
           },
         },
       },
@@ -280,6 +351,7 @@ export const addQuestionToForm = async (
 };
 
 function generateFormTitle(division: any): string {
+  // Assuming division has a divisionName property
   return `Student Feedback Form - ${division.divisionName}`;
 }
 
@@ -305,6 +377,7 @@ function generateQuestionsForAllSubjects(allocations: any[]): any[] {
       type: 'rating',
       isRequired: true,
       displayOrder: displayOrder++,
+      isDeleted: false, // Explicitly set to false on creation
     });
   });
 
@@ -315,7 +388,6 @@ function generateHash(): string {
   return Math.random().toString(36).substring(2, 15);
 }
 
-// Update the updateFormStatus function
 export const updateFormStatus = async (
   req: Request,
   res: Response
@@ -325,7 +397,10 @@ export const updateFormStatus = async (
     const { status, startDate, endDate } = req.body;
 
     const updatedForm = await prisma.feedbackForm.update({
-      where: { id },
+      where: {
+        id,
+        isDeleted: false, // Ensure we are not updating status of a soft-deleted form
+      },
       data: {
         status,
         startDate: new Date(startDate),
@@ -371,7 +446,10 @@ export const bulkUpdateFormStatus = async (
     const updatedForms = await prisma.$transaction(
       formIds.map((id: string) =>
         prisma.feedbackForm.update({
-          where: { id },
+          where: {
+            id,
+            isDeleted: false, // Ensure we are not bulk updating status of soft-deleted forms
+          },
           data: {
             status,
             startDate: new Date(startDate),
@@ -430,6 +508,14 @@ export const getFormByAccessToken = async (
 
     if (!formAccess) {
       res.status(404).json({ success: false, error: 'Invalid access token' });
+      return;
+    }
+
+    // Check if the form itself is soft-deleted
+    if (formAccess.form?.isDeleted) {
+      res
+        .status(404)
+        .json({ success: false, error: 'Form not found or is deleted' });
       return;
     }
 

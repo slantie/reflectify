@@ -28,7 +28,10 @@ router.delete('/', async (req, res) => {
       prisma.analyticsView.deleteMany(),
       prisma.customReport.deleteMany(),
       prisma.questionCategory.deleteMany(),
+      prisma.academicYear.deleteMany(),
     ]);
+
+    console.log('🗑️ Database cleaned successfully');
 
     res.status(200).json({
       message: 'Database cleaned successfully',

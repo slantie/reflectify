@@ -5,7 +5,7 @@ import {
   deleteQuestion,
   getQuestionsByFormId,
   batchUpdateQuestions,
-} from '../../controllers/question.controller';
+} from '../../controllers/questionController';
 
 const router = express.Router();
 

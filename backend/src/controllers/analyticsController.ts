@@ -84,7 +84,10 @@ export const getOverallSemesterRating = async (
   }
 };
 
-export const getSemestersWithResponses = async (req: Request, res: Response): Promise<void> => {
+export const getSemestersWithResponses = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const semestersWithResponses = await prisma.semester.findMany({
       where: {
@@ -93,21 +96,21 @@ export const getSemestersWithResponses = async (req: Request, res: Response): Pr
             feedbackForms: {
               some: {
                 responses: {
-                  some: {}
-                }
-              }
-            }
-          }
-        }
+                  some: {},
+                },
+              },
+            },
+          },
+        },
       },
       select: {
         id: true,
         semesterNumber: true,
-        academicYear: true
+        academicYear: true,
       },
       orderBy: {
-        semesterNumber: 'desc'
-      }
+        semesterNumber: 'desc',
+      },
     });
 
     res.json(semestersWithResponses);
@@ -115,7 +118,6 @@ export const getSemestersWithResponses = async (req: Request, res: Response): Pr
     res.status(500).json({ error: 'Error fetching semesters with responses' });
   }
 };
-
 
 export const getSubjectWiseLectureLabRating = async (
   req: Request,
@@ -302,7 +304,7 @@ export const getSemesterTrendAnalysis = async (
         semester: form.subjectAllocation.semester.semesterNumber,
         subject: form.subjectAllocation.subject.name,
         averageRating: Number(avgRating.toFixed(2)),
-        academicYear: form.subjectAllocation.semester.academicYear,
+        // academicYear: form.subjectAllocation.semester.academicYear.yearString,
         responseCount: responses.length,
       };
     });

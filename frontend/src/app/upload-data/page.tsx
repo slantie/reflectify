@@ -193,6 +193,8 @@ export default function UploadPage() {
                         <button
                             onClick={() => router.back()}
                             className="p-2 hover:bg-orange-100 rounded-full transition-colors"
+                            title="Go back"
+                            aria-label="Go back"
                         >
                             <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
                         </button>
@@ -222,6 +224,8 @@ export default function UploadPage() {
                                         name={key}
                                         type="file"
                                         accept=".xlsx,.xls"
+                                        title={`Upload ${label} Excel file`}
+                                        placeholder={`Choose ${label} Excel file`}
                                         onChange={(e) =>
                                             handleFileChange(e, key)
                                         }
@@ -248,6 +252,7 @@ export default function UploadPage() {
                                                 }
                                                 className="p-1.5 hover:bg-orange-100 rounded-full transition-colors flex-shrink-0"
                                                 title="Clear file"
+                                                aria-label="Clear file"
                                             >
                                                 <XMarkIcon className="h-4 w-4 text-gray-500" />
                                             </button>

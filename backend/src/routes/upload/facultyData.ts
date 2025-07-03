@@ -388,9 +388,6 @@ router.post(
                     hodEmail: newFacultyData.email,
                   },
                 });
-                console.log(
-                  `Updated HOD for department ${department.name}: ${newFacultyData.name} (${newFacultyData.email})`
-                );
               } catch (updateError) {
                 console.error(
                   `Error updating HOD for department ${department.name}:`,
@@ -414,10 +411,6 @@ router.post(
 
       res.status(200).json({
         message: 'Faculty data import summary',
-        addedCount: addedCount,
-        updatedCount: updatedCount,
-        unchangedCount: unchangedCount,
-        skippedCount: skippedCount,
         rowsAffected: addedCount + updatedCount,
       });
     } catch (error) {
