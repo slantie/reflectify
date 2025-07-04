@@ -196,10 +196,10 @@ const HolisticAnalytics: React.FC = () => {
     }, [selectedAcademicYear, initialLoading, fetchAllFacultyPerformance]);
 
     const getScoreColor = (score: number | null): string => {
-        if (score === null) return "text-gray-400";
-        if (score >= 4.0) return "text-green-600";
-        if (score >= 3.0) return "text-yellow-600";
-        return "text-red-600";
+        if (score === null) return "text-secondary-main";
+        if (score >= 4.0) return "text-positive-dark";
+        if (score >= 3.0) return "text-warning-main";
+        return "text-negative-main";
     };
 
     const getScoreBadgeVariant = (
@@ -215,27 +215,27 @@ const HolisticAnalytics: React.FC = () => {
         if (score === null)
             return (
                 <Minus
-                    className="h-4 w-4 text-gray-500"
+                    className="h-4 w-4 text-secondary-lighter0"
                     aria-label="No trend data"
                 />
             );
         if (score >= 4.0)
             return (
                 <TrendingUp
-                    className="h-4 w-4 text-green-600"
+                    className="h-4 w-4 text-positive-dark"
                     aria-label="Positive trend"
                 />
             );
         if (score >= 3.0)
             return (
                 <Minus
-                    className="h-4 w-4 text-yellow-600"
+                    className="h-4 w-4 text-warning-main"
                     aria-label="Neutral trend"
                 />
             );
         return (
             <TrendingDown
-                className="h-4 w-4 text-red-600"
+                className="h-4 w-4 text-negative-main"
                 aria-label="Negative trend"
             />
         );
@@ -325,13 +325,13 @@ const HolisticAnalytics: React.FC = () => {
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
                 <div className="text-center">
                     <Loader2
-                        className="h-12 w-12 animate-spin text-orange-600 mx-auto mb-4"
+                        className="h-12 w-12 animate-spin text-primary-dark mx-auto mb-4"
                         aria-hidden="true"
                     />
-                    <div className="text-xl font-semibold text-gray-700">
+                    <div className="text-xl font-semibold text-secondary-dark">
                         Loading initial data...
                     </div>
-                    <div className="text-gray-500 mt-2">
+                    <div className="text-secondary-lighter0 mt-2">
                         Please wait while we fetch the data
                     </div>
                 </div>
@@ -347,12 +347,12 @@ const HolisticAnalytics: React.FC = () => {
                 {/* Header Section */}
                 <div className="text-center space-y-4">
                     <div className="flex items-center justify-center gap-3 mb-4">
-                        <BarChart3 className="h-10 w-10 text-orange-600" />
-                        <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                        <BarChart3 className="h-10 w-10 text-primary-dark" />
+                        <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-secondary-darker to-secondary-dark bg-clip-text text-transparent">
                             Holistic Faculty Analytics
                         </h1>
                     </div>
-                    <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                    <p className="text-secondary-dark text-lg max-w-2xl mx-auto">
                         Comprehensive performance analysis and insights for
                         academic excellence
                     </p>
@@ -360,30 +360,30 @@ const HolisticAnalytics: React.FC = () => {
 
                 {/* Stats Overview */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100 border-t-4 border-t-orange-500">
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-primary-lighter to-primary-lighter border-t-4 border-t-primary-dark">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-orange-800">
+                                    <p className="text-sm font-medium text-primary-darker">
                                         Total Faculties
                                     </p>
-                                    <p className="text-3xl font-bold text-orange-700">
+                                    <p className="text-3xl font-bold text-primary-darker">
                                         {Array.isArray(facultyPerformanceData)
                                             ? facultyPerformanceData.length
                                             : 0}
                                     </p>
                                 </div>
-                                <Users className="h-8 w-8 text-orange-600" />
+                                <Users className="h-8 w-8 text-primary-dark" />
                             </div>
                         </CardContent>
                     </Card>
 
                     {overallAverage !== null && (
-                        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 border-t-4 border-t-blue-500">
+                        <Card className="border-0 shadow-lg bg-gradient-to-br from-highlight1-lighter to-highlight1-lighter border-t-4 border-t-highlight1-main">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-medium text-blue-800">
+                                        <p className="text-sm font-medium text-highlight1-darker">
                                             Overall Average
                                         </p>
                                         <p
@@ -394,7 +394,7 @@ const HolisticAnalytics: React.FC = () => {
                                             {overallAverage}
                                         </p>
                                     </div>
-                                    <div className="text-blue-600">
+                                    <div className="text-highlight1-dark">
                                         {getTrendIcon(overallAverage)}
                                     </div>
                                 </div>
@@ -402,14 +402,14 @@ const HolisticAnalytics: React.FC = () => {
                         </Card>
                     )}
 
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100 border-t-4 border-t-green-500">
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-positive-lighter to-positive-lighter border-t-4 border-t-positive-lighter0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-green-800">
+                                    <p className="text-sm font-medium text-positive-dark">
                                         Excellent (≥4.0)
                                     </p>
-                                    <p className="text-3xl font-bold text-green-700">
+                                    <p className="text-3xl font-bold text-positive-dark">
                                         {
                                             (Array.isArray(
                                                 facultyPerformanceData
@@ -424,19 +424,19 @@ const HolisticAnalytics: React.FC = () => {
                                         }
                                     </p>
                                 </div>
-                                <TrendingUp className="h-8 w-8 text-green-600" />
+                                <TrendingUp className="h-8 w-8 text-positive-dark" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-red-100 border-t-4 border-t-red-500">
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-negative-lighter to-negative-lighter border-t-4 border-t-negative-main">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-red-800">
+                                    <p className="text-sm font-medium text-negative-dark">
                                         Needs Improvement (&lt;3.0)
                                     </p>
-                                    <p className="text-3xl font-bold text-red-700">
+                                    <p className="text-3xl font-bold text-negative-dark">
                                         {
                                             (Array.isArray(
                                                 facultyPerformanceData
@@ -451,7 +451,7 @@ const HolisticAnalytics: React.FC = () => {
                                         }
                                     </p>
                                 </div>
-                                <TrendingDown className="h-8 w-8 text-red-600" />
+                                <TrendingDown className="h-8 w-8 text-negative-main" />
                             </div>
                         </CardContent>
                     </Card>
@@ -459,9 +459,9 @@ const HolisticAnalytics: React.FC = () => {
 
                 {/* Filters Card */}
                 <Card className="border-0 shadow-lg">
-                    <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-                        <CardTitle className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-                            <div className="w-2 h-8 bg-orange-500 rounded-full"></div>
+                    <CardHeader className="bg-gradient-to-r from-secondary-lighter to-secondary-lighter border-b">
+                        <CardTitle className="text-2xl font-semibold text-secondary-darker flex items-center gap-2">
+                            <div className="w-2 h-8 bg-primary-dark rounded-full"></div>
                             Filters & Actions
                         </CardTitle>
                     </CardHeader>
@@ -470,7 +470,7 @@ const HolisticAnalytics: React.FC = () => {
                             <div className="flex-grow space-y-2">
                                 <label
                                     htmlFor="academic-year-select"
-                                    className="text-sm font-semibold text-gray-700 block"
+                                    className="text-sm font-semibold text-secondary-dark block"
                                 >
                                     Select Academic Year
                                 </label>
@@ -480,7 +480,7 @@ const HolisticAnalytics: React.FC = () => {
                                 >
                                     <SelectTrigger
                                         id="academic-year-select"
-                                        className="h-12 border-2 border-gray-200 focus:border-orange-500 transition-colors w-full"
+                                        className="h-12 border-2 border-secondary-lighter focus:border-primary-dark transition-colors w-full"
                                         aria-label="Select academic year"
                                     >
                                         <SelectedAcademicYearDisplay
@@ -512,7 +512,7 @@ const HolisticAnalytics: React.FC = () => {
                                 <Button
                                     onClick={fetchAllFacultyPerformance}
                                     disabled={!selectedAcademicYear || loading}
-                                    className="flex-grow h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-105"
+                                    className="flex-grow h-12 bg-gradient-to-r from-primary-dark to-primary-darker hover:from-primary-darker hover:to-primary-darker text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-105"
                                     aria-label="Refresh data for selected academic year"
                                 >
                                     {loading ? (
@@ -552,23 +552,23 @@ const HolisticAnalytics: React.FC = () => {
 
                 {/* Faculty Performance Table */}
                 <Card className="border-0 shadow-lg">
-                    <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-                        <CardTitle className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-                            <div className="w-2 h-8 bg-orange-500 rounded-full"></div>
+                    <CardHeader className="bg-gradient-to-r from-secondary-lighter to-secondary-lighter border-b">
+                        <CardTitle className="text-2xl font-semibold text-secondary-darker flex items-center gap-2">
+                            <div className="w-2 h-8 bg-primary-dark rounded-full"></div>
                             Faculty Performance Overview
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-600">
+                            <div className="flex flex-col items-center justify-center py-20 text-secondary-dark">
                                 <Loader2
-                                    className="h-8 w-8 animate-spin mb-4 text-orange-600"
+                                    className="h-8 w-8 animate-spin mb-4 text-primary-dark"
                                     aria-hidden="true"
                                 />
                                 <div className="text-lg font-medium">
                                     Loading faculty performance data...
                                 </div>
-                                <div className="text-gray-500 mt-2">
+                                <div className="text-secondary-lighter0 mt-2">
                                     Analyzing performance metrics
                                 </div>
                             </div>
@@ -577,13 +577,13 @@ const HolisticAnalytics: React.FC = () => {
                               : []
                           ).length === 0 ? (
                             <div className="text-center py-20">
-                                <div className="text-gray-400 mb-4">
+                                <div className="text-secondary-main mb-4">
                                     <BarChart3 className="h-16 w-16 mx-auto" />
                                 </div>
-                                <div className="text-xl font-medium text-gray-600 mb-2">
+                                <div className="text-xl font-medium text-secondary-dark mb-2">
                                     No Performance Data Available
                                 </div>
-                                <div className="text-gray-500">
+                                <div className="text-secondary-lighter0">
                                     No performance data available for the
                                     selected academic year.
                                 </div>
@@ -592,24 +592,24 @@ const HolisticAnalytics: React.FC = () => {
                             <div className="overflow-x-auto">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200">
-                                            <TableHead className="w-[250px] py-4 px-6 text-left font-bold text-gray-700">
+                                        <TableRow className="bg-gradient-to-r from-secondary-lighter to-secondary-lighter">
+                                            <TableHead className="w-[250px] py-4 px-6 text-left font-bold text-secondary-dark">
                                                 Faculty Name
                                             </TableHead>
                                             {[1, 2, 3, 4, 5, 6, 7, 8].map(
                                                 (sem) => (
                                                     <TableHead
                                                         key={sem}
-                                                        className="py-4 px-4 text-center font-bold text-gray-700 min-w-[80px]"
+                                                        className="py-4 px-4 text-center font-bold text-secondary-dark min-w-[80px]"
                                                     >
                                                         Sem {sem}
                                                     </TableHead>
                                                 )
                                             )}
-                                            <TableHead className="py-4 px-4 text-center font-bold text-gray-700 min-w-[100px]">
+                                            <TableHead className="py-4 px-4 text-center font-bold text-secondary-dark min-w-[100px]">
                                                 Overall Avg
                                             </TableHead>
-                                            <TableHead className="py-4 px-4 text-center font-bold text-gray-700 min-w-[80px]">
+                                            <TableHead className="py-4 px-4 text-center font-bold text-secondary-dark min-w-[80px]">
                                                 Trend
                                             </TableHead>
                                         </TableRow>
@@ -621,13 +621,13 @@ const HolisticAnalytics: React.FC = () => {
                                         ).map((faculty, index) => (
                                             <TableRow
                                                 key={faculty.facultyId}
-                                                className={`transition-colors duration-200 hover:bg-gray-50 ${
+                                                className={`transition-colors duration-200 hover:bg-secondary-lighter ${
                                                     index % 2 === 0
                                                         ? "bg-white"
-                                                        : "bg-gray-50/50"
+                                                        : "bg-secondary-lighter/50"
                                                 }`}
                                             >
-                                                <TableCell className="py-4 px-6 font-medium text-gray-900 border-r border-gray-200">
+                                                <TableCell className="py-4 px-6 font-medium text-secondary-darker border-r border-secondary-lighter">
                                                     {faculty.Faculty_name}
                                                 </TableCell>
                                                 {[1, 2, 3, 4, 5, 6, 7, 8].map(
@@ -656,7 +656,7 @@ const HolisticAnalytics: React.FC = () => {
                                                                     </Badge>
                                                                 ) : (
                                                                     <span
-                                                                        className="text-gray-400 text-lg"
+                                                                        className="text-secondary-main text-lg"
                                                                         aria-label={`No data for semester ${sem}`}
                                                                     >
                                                                         -
@@ -666,7 +666,7 @@ const HolisticAnalytics: React.FC = () => {
                                                         );
                                                     }
                                                 )}
-                                                <TableCell className="py-4 px-4 text-center border-l border-gray-200">
+                                                <TableCell className="py-4 px-4 text-center border-l border-secondary-lighter">
                                                     {faculty.total_average !==
                                                     null ? (
                                                         <Badge
@@ -682,7 +682,7 @@ const HolisticAnalytics: React.FC = () => {
                                                         </Badge>
                                                     ) : (
                                                         <span
-                                                            className="text-gray-400 text-lg"
+                                                            className="text-secondary-main text-lg"
                                                             aria-label="No overall average data"
                                                         >
                                                             -

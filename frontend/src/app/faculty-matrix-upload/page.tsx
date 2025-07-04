@@ -81,7 +81,7 @@ export default function FacultyMatrixUpload() {
             const { academicYears: fetchedYears } = await response.json(); // Destructure academicYears from response
             setAcademicYears(fetchedYears || []);
         } catch (error) {
-            console.error('Error fetching academic years:', error);
+            console.error("Error fetching academic years:", error);
             toast.error("Failed to load academic years");
             setAcademicYears([]);
         }
@@ -146,8 +146,15 @@ export default function FacultyMatrixUpload() {
     };
 
     const handleUpload = async () => {
-        if (!selectedFile || !selectedDepartment || !selectedAcademicYear || !selectedSemesterRun) {
-            toast.error("Please select department, academic year, semester run, and a file");
+        if (
+            !selectedFile ||
+            !selectedDepartment ||
+            !selectedAcademicYear ||
+            !selectedSemesterRun
+        ) {
+            toast.error(
+                "Please select department, academic year, semester run, and a file"
+            );
             return;
         }
 
@@ -202,11 +209,11 @@ export default function FacultyMatrixUpload() {
                         <button
                             onClick={() => router.back()}
                             aria-label="Go back"
-                            className="p-2 hover:bg-orange-100 rounded-full transition-colors"
+                            className="p-2 hover:bg-primary-lighter rounded-full transition-colors"
                         >
-                            <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+                            <ArrowLeftIcon className="h-6 w-6 text-secondary-dark" />
                         </button>
-                        <h1 className="text-3xl font-semibold text-gray-900">
+                        <h1 className="text-3xl font-semibold text-secondary-darker">
                             Faculty Matrix Upload
                         </h1>
                     </div>
@@ -214,7 +221,7 @@ export default function FacultyMatrixUpload() {
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         {/* Upload Section */}
                         <div className="lg:col-span-1">
-                            <Card className="bg-white shadow-sm border border-orange-100 p-8 rounded-2xl">
+                            <Card className="bg-white shadow-sm border border-primary-lighter p-8 rounded-2xl">
                                 <div className="space-y-6">
                                     {/* Department Selection */}
                                     <div>
@@ -222,17 +229,17 @@ export default function FacultyMatrixUpload() {
                                             value={selectedDepartment}
                                             onChange={setSelectedDepartment}
                                         >
-                                            <Listbox.Label className="block text-base font-semibold text-gray-700 mb-2">
+                                            <Listbox.Label className="block text-base font-semibold text-secondary-dark mb-2">
                                                 Select Department
                                             </Listbox.Label>
                                             <div className="relative">
-                                                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-orange-100 focus:outline-none focus:border-orange-500 transition-colors">
+                                                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-primary-lighter focus:outline-none focus:border-primary-dark transition-colors">
                                                     <span className="block truncate font-medium">
                                                         {selectedDepartment?.name ||
                                                             "Choose a Department"}
                                                     </span>
                                                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                                                        <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
+                                                        <ChevronUpDownIcon className="h-5 w-5 text-secondary-main" />
                                                     </span>
                                                 </Listbox.Button>
                                                 <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
@@ -250,8 +257,8 @@ export default function FacultyMatrixUpload() {
                                                                 }) =>
                                                                     `relative cursor-pointer select-none py-3 pl-4 pr-4 ${
                                                                         active
-                                                                            ? "bg-orange-50 text-orange-900"
-                                                                            : "text-gray-900"
+                                                                            ? "bg-primary-lighter text-primary-darker"
+                                                                            : "text-secondary-darker"
                                                                     }`
                                                                 }
                                                             >
@@ -272,21 +279,22 @@ export default function FacultyMatrixUpload() {
                                             value={selectedAcademicYear}
                                             onChange={setSelectedAcademicYear}
                                         >
-                                            <Listbox.Label className="block text-base font-semibold text-gray-700 mb-2">
+                                            <Listbox.Label className="block text-base font-semibold text-secondary-dark mb-2">
                                                 Select Academic Year
                                             </Listbox.Label>
                                             <div className="relative">
-                                                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-orange-100 focus:outline-none focus:border-orange-500 transition-colors">
+                                                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-primary-lighter focus:outline-none focus:border-primary-dark transition-colors">
                                                     <span className="block truncate font-medium">
                                                         {selectedAcademicYear?.yearString || // Use yearString here
                                                             "Choose Academic Year"}
                                                     </span>
                                                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                                                        <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
+                                                        <ChevronUpDownIcon className="h-5 w-5 text-secondary-main" />
                                                     </span>
                                                 </Listbox.Button>
                                                 <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                                    {academicYears.map( // Map over fetched academicYears
+                                                    {academicYears.map(
+                                                        // Map over fetched academicYears
                                                         (year) => (
                                                             <Listbox.Option
                                                                 key={year.id}
@@ -296,12 +304,15 @@ export default function FacultyMatrixUpload() {
                                                                 }) =>
                                                                     `relative cursor-pointer select-none py-3 pl-4 pr-4 ${
                                                                         active
-                                                                            ? "bg-orange-50 text-orange-900"
-                                                                            : "text-gray-900"
+                                                                            ? "bg-primary-lighter text-primary-darker"
+                                                                            : "text-secondary-darker"
                                                                     }`
                                                                 }
                                                             >
-                                                                {year.yearString} {/* Display yearString */}
+                                                                {
+                                                                    year.yearString
+                                                                }{" "}
+                                                                {/* Display yearString */}
                                                             </Listbox.Option>
                                                         )
                                                     )}
@@ -316,17 +327,17 @@ export default function FacultyMatrixUpload() {
                                             value={selectedSemesterRun}
                                             onChange={setSelectedSemesterRun}
                                         >
-                                            <Listbox.Label className="block text-base font-semibold text-gray-700 mb-2">
+                                            <Listbox.Label className="block text-base font-semibold text-secondary-dark mb-2">
                                                 Select Semester Run
                                             </Listbox.Label>
                                             <div className="relative">
-                                                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-orange-100 focus:outline-none focus:border-orange-500 transition-colors">
+                                                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-primary-lighter focus:outline-none focus:border-primary-dark transition-colors">
                                                     <span className="block truncate font-medium">
                                                         {selectedSemesterRun?.type ||
                                                             "Choose Semester Run"}
                                                     </span>
                                                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                                                        <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
+                                                        <ChevronUpDownIcon className="h-5 w-5 text-secondary-main" />
                                                     </span>
                                                 </Listbox.Button>
                                                 <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
@@ -340,8 +351,8 @@ export default function FacultyMatrixUpload() {
                                                                 }) =>
                                                                     `relative cursor-pointer select-none py-3 pl-4 pr-4 ${
                                                                         active
-                                                                            ? "bg-orange-50 text-orange-900"
-                                                                            : "text-gray-900"
+                                                                            ? "bg-primary-lighter text-primary-darker"
+                                                                            : "text-secondary-darker"
                                                                     }`
                                                                 }
                                                             >
@@ -356,7 +367,7 @@ export default function FacultyMatrixUpload() {
 
                                     {/* File Upload */}
                                     <div className="space-y-2">
-                                        <label className="block text-base font-semibold text-gray-700">
+                                        <label className="block text-base font-semibold text-secondary-dark">
                                             Upload Excel File
                                         </label>
                                         <div className="relative">
@@ -365,18 +376,18 @@ export default function FacultyMatrixUpload() {
                                                 accept=".xlsx,.xls"
                                                 onChange={handleFileChange}
                                                 aria-label="Upload Excel file"
-                                                className="block w-full text-sm text-gray-500
+                                                className="block w-full text-sm text-secondary-lighter0
         file:mr-4 file:py-3 file:px-6
         file:rounded-xl file:border-0
         file:text-sm file:font-semibold
-        file:bg-orange-50 file:text-orange-700
-        hover:file:bg-orange-100
+        file:bg-primary-lighter file:text-primary-darker
+        hover:file:bg-primary-lighter
         transition-all cursor-pointer"
                                             />
                                             {selectedFile && (
                                                 <div className="flex items-center justify-between mt-2">
-                                                    <p className="text-sm text-orange-600 font-medium flex items-center gap-2 truncate max-w-[80%]">
-                                                        <span className="w-2 h-2 bg-orange-600 rounded-full flex-shrink-0"></span>
+                                                    <p className="text-sm text-primary-dark font-medium flex items-center gap-2 truncate max-w-[80%]">
+                                                        <span className="w-2 h-2 bg-primary-dark rounded-full flex-shrink-0"></span>
                                                         <span className="truncate">
                                                             {selectedFile.name}
                                                         </span>
@@ -387,9 +398,9 @@ export default function FacultyMatrixUpload() {
                                                         }
                                                         aria-label="Clear file"
                                                         title="Clear file"
-                                                        className="p-1.5 hover:bg-orange-100 rounded-full transition-colors flex-shrink-0"
+                                                        className="p-1.5 hover:bg-primary-lighter rounded-full transition-colors flex-shrink-0"
                                                     >
-                                                        <XMarkIcon className="h-4 w-4 text-gray-500" />
+                                                        <XMarkIcon className="h-4 w-4 text-secondary-lighter0" />
                                                     </button>
                                                 </div>
                                             )}
@@ -403,8 +414,8 @@ export default function FacultyMatrixUpload() {
                                             disabled={
                                                 !selectedFile || isLoading
                                             }
-                                            className="w-full bg-white border-2 border-orange-500 text-orange-600 py-3 px-6 rounded-xl
-                        hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2
+                                            className="w-full bg-white border-2 border-primary-dark text-primary-dark py-3 px-6 rounded-xl
+                        hover:bg-primary-lighter focus:outline-none focus:ring-2 focus:ring-primary-dark focus:ring-offset-2
                         transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Preview Data
@@ -418,8 +429,8 @@ export default function FacultyMatrixUpload() {
                                                 !selectedSemesterRun ||
                                                 isLoading
                                             }
-                                            className="w-full bg-orange-500 text-white py-3 px-6 rounded-xl
-                        hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2
+                                            className="w-full bg-primary-dark text-white py-3 px-6 rounded-xl
+                        hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark focus:ring-offset-2
                         transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {isLoading ? (
@@ -439,38 +450,38 @@ export default function FacultyMatrixUpload() {
                         {/* Preview Section */}
                         <div className="lg:col-span-3">
                             {activeTable ? (
-                                <Card className="bg-white shadow-sm border border-orange-100 rounded-2xl overflow-hidden">
-                                    <div className="p-6 border-b border-orange-100">
+                                <Card className="bg-white shadow-sm border border-primary-lighter rounded-2xl overflow-hidden">
+                                    <div className="p-6 border-b border-primary-lighter">
                                         <div className="flex items-center gap-3">
-                                            <TableCellsIcon className="h-6 w-6 text-orange-500" />
-                                            <h2 className="text-xl font-semibold text-gray-900">
+                                            <TableCellsIcon className="h-6 w-6 text-primary-dark" />
+                                            <h2 className="text-xl font-semibold text-secondary-darker">
                                                 Data Preview
                                             </h2>
                                         </div>
                                     </div>
-                                    <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent hover:scrollbar-thumb-orange-300">
+                                    <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary-lighter scrollbar-track-transparent hover:scrollbar-thumb-primary-light">
                                         <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200">
-                                                <thead className="bg-orange-50 sticky top-0 z-10">
+                                            <table className="min-w-full divide-y divide-secondary-lighter">
+                                                <thead className="bg-primary-lighter sticky top-0 z-10">
                                                     <tr>
                                                         {Object.keys(
                                                             activeTable[0] || {}
                                                         ).map((header) => (
                                                             <th
                                                                 key={header}
-                                                                className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider bg-orange-50"
+                                                                className="px-6 py-4 text-left text-xs font-semibold text-secondary-dark uppercase tracking-wider bg-primary-lighter"
                                                             >
                                                                 {header}
                                                             </th>
                                                         ))}
                                                     </tr>
                                                 </thead>
-                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                <tbody className="bg-white divide-y divide-secondary-lighter">
                                                     {activeTable.map(
                                                         (row, index) => (
                                                             <tr
                                                                 key={index}
-                                                                className="hover:bg-orange-50 transition-colors"
+                                                                className="hover:bg-primary-lighter transition-colors"
                                                             >
                                                                 {Object.values(
                                                                     row as Record<
@@ -487,7 +498,7 @@ export default function FacultyMatrixUpload() {
                                                                             key={
                                                                                 cellIndex
                                                                             }
-                                                                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-600"
+                                                                            className="px-6 py-4 whitespace-nowrap text-sm text-secondary-dark"
                                                                         >
                                                                             {value?.toString()}
                                                                         </td>
@@ -502,8 +513,8 @@ export default function FacultyMatrixUpload() {
                                     </div>
                                 </Card>
                             ) : (
-                                <div className="h-[600px] flex items-center justify-center bg-white rounded-2xl border border-orange-100">
-                                    <p className="text-gray-500 text-lg">
+                                <div className="h-[600px] flex items-center justify-center bg-white rounded-2xl border border-primary-lighter">
+                                    <p className="text-secondary-lighter0 text-lg">
                                         Select a file to preview data
                                     </p>
                                 </div>

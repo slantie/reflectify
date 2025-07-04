@@ -162,25 +162,25 @@ export default function AnalyticsDashboard() {
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => router.back()}
-                            className="p-2 hover:bg-orange-100 rounded-full transition-colors"
+                            className="p-2 hover:bg-primary-lighter rounded-full transition-colors"
                             aria-label="Go back"
                             title="Go back"
                         >
-                            <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+                            <ArrowLeftIcon className="h-6 w-6 text-secondary-dark" />
                         </button>
-                        <h1 className="text-3xl font-semibold text-gray-900">
+                        <h1 className="text-3xl font-semibold text-secondary-darker">
                             Analytics Dashboard
                         </h1>
                     </div>
 
                     {/* Filters Section */}
-                    <Card className="bg-white shadow-sm border border-orange-100 p-6 rounded-2xl">
+                    <Card className="bg-white shadow-sm border border-primary-lighter p-6 rounded-2xl">
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-orange-50 rounded-xl">
-                                    <ChartBarIcon className="h-5 w-5 text-orange-600" />
+                                <div className="p-2 bg-primary-lighter rounded-xl">
+                                    <ChartBarIcon className="h-5 w-5 text-primary-dark" />
                                 </div>
-                                <h2 className="text-lg font-semibold text-gray-900">
+                                <h2 className="text-lg font-semibold text-secondary-darker">
                                     Select Filters
                                 </h2>
                             </div>
@@ -188,7 +188,7 @@ export default function AnalyticsDashboard() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Semester Filter */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">
+                                    <label className="text-sm font-medium text-secondary-dark">
                                         Semester
                                     </label>
                                     <select
@@ -196,7 +196,7 @@ export default function AnalyticsDashboard() {
                                         onChange={(e) =>
                                             handleSemesterChange(e.target.value)
                                         }
-                                        className="w-full p-2.5 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        className="w-full p-2.5 border border-primary-lighter rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-dark"
                                         aria-label="Select semester"
                                         title="Select semester"
                                     >
@@ -215,7 +215,7 @@ export default function AnalyticsDashboard() {
 
                                 {/* Division Filter */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">
+                                    <label className="text-sm font-medium text-secondary-dark">
                                         Division
                                     </label>
                                     <select
@@ -224,7 +224,7 @@ export default function AnalyticsDashboard() {
                                             setSelectedDivision(e.target.value)
                                         }
                                         disabled={selectedSemester === "0"}
-                                        className="w-full p-2.5 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        className="w-full p-2.5 border border-primary-lighter rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-dark disabled:bg-secondary-lighter disabled:cursor-not-allowed"
                                         aria-label="Select division"
                                         title="Select division"
                                     >
@@ -250,21 +250,21 @@ export default function AnalyticsDashboard() {
                     </Card>
 
                     {/* Analytics Display */}
-                    <Card className="bg-white shadow-sm border border-orange-100 rounded-2xl">
+                    <Card className="bg-white shadow-sm border border-primary-lighter rounded-2xl">
                         {loading ? (
                             <div className="h-[400px] flex items-center justify-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-dark" />
                             </div>
                         ) : !selectedSemester ? (
                             <div className="h-[400px] flex items-center justify-center">
-                                <p className="text-gray-500">
+                                <p className="text-secondary-lighter0">
                                     Select a semester to view analytics
                                 </p>
                             </div>
                         ) : (
                             subjectRatingsData && (
                                 <>
-                                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                                    <h2 className="text-xl font-semibold text-secondary-darker mb-4">
                                         Subject-wise Lecture & Lab Rating
                                     </h2>
                                     <GroupedBarChart

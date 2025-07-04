@@ -385,17 +385,17 @@ export default function DivisionManagement() {
                     <button
                         onClick={() => router.back()}
                         aria-label="Go back"
-                        className="p-2 hover:bg-orange-100 rounded-full transition-colors"
+                        className="p-2 hover:bg-primary-lighter rounded-full transition-colors"
                     >
-                        <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+                        <ArrowLeftIcon className="h-6 w-6 text-secondary-dark" />
                     </button>
-                    <h1 className="text-3xl font-semibold text-gray-900">
+                    <h1 className="text-3xl font-semibold text-secondary-darker">
                         Division Management Portal
                     </h1>
                 </div>
                 <button
                     onClick={handleExportToExcel}
-                    className="flex items-center justify-center gap-2 bg-green-500 text-white px-5 py-2.5 rounded-lg hover:bg-green-600 transition-colors duration-200 shadow-sm whitespace-nowrap"
+                    className="flex items-center justify-center gap-2 bg-positive-lighter0 text-white px-5 py-2.5 rounded-lg hover:bg-positive-dark transition-colors duration-200 shadow-sm whitespace-nowrap"
                 >
                     <ArrowDownTrayIcon className="h-5 w-5" />
                     Export Excel
@@ -427,22 +427,22 @@ export default function DivisionManagement() {
             </div>
 
             {/* Search and Actions */}
-            <div className="flex gap-6 items-center bg-white p-5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-gray-100">
+            <div className="flex gap-6 items-center bg-white p-5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-secondary-lighter">
                 <div className="flex-1 relative">
                     <input
                         type="text"
                         placeholder="Search divisions..."
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-secondary-lighter focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <BuildingOfficeIcon className="h-5 w-5 text-gray-400 absolute left-3 top-3" />
+                    <BuildingOfficeIcon className="h-5 w-5 text-secondary-main absolute left-3 top-3" />
                 </div>
 
                 <div className="flex gap-4">
                     <select
                         aria-label="Select Department"
-                        className="px-3 py-2.5 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                        className="px-3 py-2.5 rounded-lg border border-secondary-lighter focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                         value={selectedDepartment}
                         onChange={(e) => setSelectedDepartment(e.target.value)}
                     >
@@ -456,7 +456,7 @@ export default function DivisionManagement() {
 
                     <select
                         aria-label="Select Semester"
-                        className="px-3 py-2.5 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                        className="px-3 py-2.5 rounded-lg border border-secondary-lighter focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                         value={selectedSemester}
                         onChange={(e) => setSelectedSemester(e.target.value)}
                     >
@@ -472,7 +472,7 @@ export default function DivisionManagement() {
 
                     <select
                         aria-label="Select Year"
-                        className="px-3 py-2.5 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                        className="px-3 py-2.5 rounded-lg border border-secondary-lighter focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
                     >
@@ -488,7 +488,7 @@ export default function DivisionManagement() {
                 <div className="flex items-center gap-3">
                     <select
                         aria-label="Sort by"
-                        className="px-3 py-2.5 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                        className="px-3 py-2.5 rounded-lg border border-secondary-lighter focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                         value={sortField}
                         onChange={(e) =>
                             setSortField(
@@ -512,22 +512,22 @@ export default function DivisionManagement() {
                         onClick={() =>
                             setSortOrder(sortOrder === "asc" ? "desc" : "asc")
                         }
-                        className="px-4 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 flex items-center gap-2 transition-colors shadow-sm"
+                        className="px-4 py-2.5 rounded-lg border border-secondary-lighter hover:bg-secondary-lighter flex items-center gap-2 transition-colors shadow-sm"
                     >
-                        <span className="text-gray-700">
+                        <span className="text-secondary-dark">
                             {sortOrder === "asc" ? "Ascending" : "Descending"}
                         </span>
                         {sortOrder === "asc" ? (
-                            <ArrowUpIcon className="h-4 w-4 text-gray-500" />
+                            <ArrowUpIcon className="h-4 w-4 text-secondary-lighter0" />
                         ) : (
-                            <ArrowDownIcon className="h-4 w-4 text-gray-500" />
+                            <ArrowDownIcon className="h-4 w-4 text-secondary-lighter0" />
                         )}
                     </button>
                 </div>
 
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-orange-400 text-white px-5 py-2.5 rounded-lg hover:bg-orange-500 transition-colors duration-200 shadow-sm"
+                    className="flex items-center gap-2 bg-light-primary text-white px-5 py-2.5 rounded-lg hover:bg-primary-dark transition-colors duration-200 shadow-sm"
                 >
                     <PlusIcon className="h-5 w-5" />
                     Add Division
@@ -535,32 +535,32 @@ export default function DivisionManagement() {
             </div>
 
             {/* Divisions Table */}
-            <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-secondary-lighter overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <table className="min-w-full divide-y divide-secondary-lighter">
                         <thead>
-                            <tr className="bg-gray-50">
-                                <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                            <tr className="bg-secondary-lighter">
+                                <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                     Division Name
                                 </th>
-                                <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                                <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                     Department
                                 </th>
-                                <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                                <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                     Semester
                                 </th>
-                                <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                                <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                     Academic Year
                                 </th>
-                                <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                                <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                     Student Count
                                 </th>
-                                <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                                <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-secondary-lighter">
                             {getFilteredDivisions().length > 0 ? (
                                 getFilteredDivisions().map((division) => {
                                     // Find the yearString for display
@@ -575,19 +575,19 @@ export default function DivisionManagement() {
                                     return (
                                         <tr
                                             key={division.id}
-                                            className="hover:bg-orange-50/50 hover:shadow-sm transition-all duration-200"
+                                            className="hover:bg-primary-lighter/50 hover:shadow-sm transition-all duration-200"
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <div className="h-10 w-10 rounded-full bg-orange-100/50 flex items-center justify-center">
-                                                        <span className="text-orange-600 font-medium">
+                                                    <div className="h-10 w-10 rounded-full bg-primary-lighter/50 flex items-center justify-center">
+                                                        <span className="text-primary-dark font-medium">
                                                             {
                                                                 division.divisionName
                                                             }
                                                         </span>
                                                     </div>
                                                     <div className="ml-4">
-                                                        <div className="text-md font-medium text-gray-900">
+                                                        <div className="text-md font-medium text-secondary-darker">
                                                             {
                                                                 division.divisionName
                                                             }
@@ -596,25 +596,25 @@ export default function DivisionManagement() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-md text-gray-900">
+                                                <div className="text-md text-secondary-darker">
                                                     {division.department.name}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-md text-gray-600">
+                                            <td className="px-6 py-4 whitespace-nowrap text-md text-secondary-dark">
                                                 Semester{" "}
                                                 {
                                                     division.semester
                                                         .semesterNumber
                                                 }
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-md text-gray-600">
+                                            <td className="px-6 py-4 whitespace-nowrap text-md text-secondary-dark">
                                                 {academicYearString}{" "}
                                                 {/* Display the year string here */}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2" />
-                                                    <span className="text-md text-gray-900">
+                                                    <UserGroupIcon className="h-5 w-5 text-secondary-main mr-2" />
+                                                    <span className="text-md text-secondary-darker">
                                                         {division.studentCount}
                                                     </span>
                                                 </div>
@@ -631,7 +631,7 @@ export default function DivisionManagement() {
                                                                 true
                                                             );
                                                         }}
-                                                        className="text-orange-400 hover:text-orange-500 transition-colors"
+                                                        className="text-light-primary hover:text-primary-dark transition-colors"
                                                     >
                                                         <PencilIcon className="h-5 w-5" />
                                                     </button>
@@ -642,7 +642,7 @@ export default function DivisionManagement() {
                                                                 division.id
                                                             )
                                                         }
-                                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                                        className="text-secondary-main hover:text-negative-main transition-colors"
                                                     >
                                                         <TrashIcon className="h-5 w-5" />
                                                     </button>
@@ -658,8 +658,8 @@ export default function DivisionManagement() {
                                         className="px-6 py-8 text-center"
                                     >
                                         <div className="flex flex-col items-center justify-center space-y-2">
-                                            <BuildingOfficeIcon className="h-8 w-8 text-gray-300" />
-                                            <p className="text-gray-500 font-medium">
+                                            <BuildingOfficeIcon className="h-8 w-8 text-secondary-light" />
+                                            <p className="text-secondary-lighter0 font-medium">
                                                 No matching divisions found
                                             </p>
                                         </div>

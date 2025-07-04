@@ -102,7 +102,7 @@ export function Header() {
                 damping: 20,
                 duration: 0.5,
             }}
-            className="sticky top-0 z-50 w-full border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl"
+            className="sticky top-0 z-50 w-full border-b border-secondary-lighter dark:border-secondary-darker bg-white/80 dark:bg-secondary-darker/80 backdrop-blur-xl"
         >
             <div className="mx-auto w-full-[20rem] px-4 sm:px-6 lg:px-8">
                 <div className="flex h-20 items-center justify-between">
@@ -132,7 +132,7 @@ export function Header() {
                                     repeat: Infinity,
                                 }}
                             >
-                                <span className="text-orange-500">
+                                <span className="text-primary-dark">
                                     Reflectify
                                 </span>
                             </motion.span>
@@ -149,7 +149,7 @@ export function Header() {
                                         {pathname === item.href && (
                                             <motion.div
                                                 layoutId="activeTab"
-                                                className="absolute inset-0 bg-orange-50 dark:bg-orange-900/20 rounded-lg"
+                                                className="absolute inset-0 bg-primary-lighter dark:bg-primary-darker/20 rounded-lg"
                                                 transition={{
                                                     type: "spring",
                                                     bounce: 0.2,
@@ -157,15 +157,15 @@ export function Header() {
                                                 }}
                                             />
                                         )}
-                                        <motion.div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400">
+                                        <motion.div className="flex items-center gap-2 text-secondary-dark dark:text-secondary-light hover:text-primary-dark dark:hover:text-light-primary">
                                             {!user && item.icon && (
                                                 <item.icon className="w-4 h-4" />
                                             )}
                                             <span
                                                 className={`relative z-10 text-sm font-medium ${
                                                     pathname === item.href
-                                                    // ? "text-orange-600 dark:text-orange-400"
-                                                    // : "text-gray-600 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400"
+                                                    // ? "text-primary-dark dark:text-light-primary"
+                                                    // : "text-secondary-dark dark:text-secondary-light hover:text-primary-dark dark:hover:text-light-primary"
                                                 }`}
                                             >
                                                 {item.name}
@@ -180,13 +180,13 @@ export function Header() {
                     <div className="flex items-center gap-4">
                         {/* <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="p-2 rounded-lg hover:bg-secondary-lighter dark:hover:bg-secondary-darker"
               aria-label="Toggle theme"
             >
               {theme === "light" ? (
-                <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <Moon className="w-5 h-5 text-secondary-dark dark:text-secondary-light" />
               ) : (
-                <Sun className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <Sun className="w-5 h-5 text-secondary-dark dark:text-secondary-light" />
               )}
             </button> */}
 
@@ -195,13 +195,13 @@ export function Header() {
                                 onClick={() =>
                                     setIsMobileMenuOpen(!isMobileMenuOpen)
                                 }
-                                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                                className="p-2 rounded-lg hover:bg-secondary-lighter dark:hover:bg-secondary-darker"
                                 aria-label="Toggle mobile menu"
                             >
                                 {isMobileMenuOpen ? (
-                                    <X className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                                    <X className="h-6 w-6 text-secondary-dark dark:text-secondary-light" />
                                 ) : (
-                                    <Menu className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                                    <Menu className="h-6 w-6 text-secondary-dark dark:text-secondary-light" />
                                 )}
                             </button>
                         </div>
@@ -218,7 +218,7 @@ export function Header() {
                                         <motion.button
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
-                                            className="px-6 py-3 text-md font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors"
+                                            className="px-6 py-3 text-md font-medium text-white bg-primary-dark rounded-lg hover:bg-primary-dark transition-colors"
                                         >
                                             Log in
                                         </motion.button>
@@ -227,7 +227,7 @@ export function Header() {
                             ) : (
                                 <div className="relative" ref={dropdownRef}>
                                     {isLoading ? (
-                                        <motion.div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                                        <motion.div className="h-10 w-10 rounded-full bg-secondary-lighter dark:bg-secondary-dark animate-pulse" />
                                     ) : (
                                         <motion.div
                                             className="flex items-center gap-6"
@@ -252,7 +252,7 @@ export function Header() {
                                                 aria-haspopup="true"
                                             >
                                                 <motion.div
-                                                    className="h-10 w-10 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 grid place-items-center text-white font-medium"
+                                                    className="h-10 w-10 rounded-full bg-gradient-to-r from-primary-dark to-primary-dark grid place-items-center text-white font-medium"
                                                     whileHover={{ scale: 1.05 }}
                                                     whileTap={{ scale: 0.95 }}
                                                 >
@@ -260,11 +260,11 @@ export function Header() {
                                                 </motion.div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex flex-col">
-                                                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                        <span className="text-sm font-semibold text-secondary-darker dark:text-secondary-lighter">
                                                             {user.name}
                                                         </span>
                                                         {user.isSuper && (
-                                                            <span className="text-xs bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full font-medium">
+                                                            <span className="text-xs bg-primary-lighter dark:bg-primary-darker text-primary-darker dark:text-primary-light px-2 py-0.5 rounded-full font-medium">
                                                                 Admin
                                                             </span>
                                                         )}
@@ -303,13 +303,13 @@ export function Header() {
                                                     duration: 0.2,
                                                     ease: [0.4, 0, 0.2, 1],
                                                 }}
-                                                className="absolute right-0 mt-4 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 pb-2"
+                                                className="absolute right-0 mt-4 w-64 bg-white dark:bg-secondary-darker rounded-xl shadow-lg border border-secondary-lighter dark:border-secondary-dark pb-2"
                                             >
-                                                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                                                    <p className="text-md font-semibold text-gray-900 dark:text-gray-100">
+                                                <div className="px-4 py-3 border-b border-secondary-lighter dark:border-secondary-dark">
+                                                    <p className="text-md font-semibold text-secondary-darker dark:text-secondary-lighter">
                                                         {user.name}
                                                     </p>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                    <p className="text-sm text-secondary-dark dark:text-secondary-main">
                                                         {user.email}
                                                     </p>
                                                 </div>
@@ -317,13 +317,13 @@ export function Header() {
                                                 <div className="">
                                                     <Link href="/edit-profile">
                                                         <motion.div
-                                                            className="flex mt-2 items-center gap-2 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 hover:bg-orange-100 dark:hover:bg-orange-900/20"
+                                                            className="flex mt-2 items-center gap-2 px-4 py-2 text-sm text-secondary-darker dark:text-secondary-lighter hover:bg-primary-lighter dark:hover:bg-primary-darker/20"
                                                             whileHover={{
                                                                 x: 2,
                                                             }}
                                                         >
-                                                            <div className="p-1 rounded-lg bg-orange-200 dark:bg-orange-900/30">
-                                                                <UserCog className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                                                            <div className="p-1 rounded-lg bg-primary-lighter dark:bg-primary-darker/30">
+                                                                <UserCog className="w-4 h-4 text-primary-dark dark:text-light-primary" />
                                                             </div>
                                                             <span>
                                                                 Edit Profile
@@ -331,17 +331,17 @@ export function Header() {
                                                         </motion.div>
                                                     </Link>
 
-                                                    <div className="border-t border-gray-200 dark:border-gray-700 mt-2"></div>
+                                                    <div className="border-t border-secondary-lighter dark:border-secondary-dark mt-2"></div>
 
                                                     <motion.button
                                                         onClick={logout}
-                                                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20"
+                                                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-negative-main dark:text-negative-light hover:bg-negative-lighter dark:hover:bg-negative-darker/20"
                                                         whileHover={{
                                                             x: 2,
                                                         }}
                                                     >
-                                                        <div className="p-1 rounded-lg bg-red-200 dark:bg-red-900/30">
-                                                            <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                        <div className="p-1 rounded-lg bg-negative-light dark:bg-negative-darker/30">
+                                                            <LogOut className="w-4 h-4 text-negative-main dark:text-negative-light" />
                                                         </div>
                                                         <span>Sign out</span>
                                                     </motion.button>
@@ -365,7 +365,7 @@ export function Header() {
                                 duration: 0.3,
                                 ease: "easeInOut",
                             }}
-                            className="lg:hidden border-t border-gray-100 dark:border-gray-800 py-4"
+                            className="lg:hidden border-t border-secondary-lighter dark:border-secondary-darker py-4"
                         >
                             <nav className="flex flex-col gap-2">
                                 {memoizedNavigation.map((item) => (
@@ -373,8 +373,8 @@ export function Header() {
                                         <motion.div
                                             className={`px-4 py-2 rounded-lg ${
                                                 pathname === item.href
-                                                    ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
-                                                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                    ? "bg-primary-lighter dark:bg-primary-darker/20 text-primary-dark dark:text-light-primary"
+                                                    : "text-secondary-dark dark:text-secondary-light hover:bg-secondary-lighter dark:hover:bg-secondary-darker"
                                             }`}
                                             whileTap={{ scale: 0.98 }}
                                         >
@@ -392,7 +392,7 @@ export function Header() {
                                         <Link href="/edit-profile">
                                             <motion.div
                                                 whileTap={{ scale: 0.98 }}
-                                                className="px-6 py-3 text-left text-md font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg flex items-center gap-2"
+                                                className="px-6 py-3 text-left text-md font-medium text-secondary-dark dark:text-secondary-light hover:text-secondary-darker dark:hover:text-secondary-lighter hover:bg-secondary-lighter dark:hover:bg-secondary-darker rounded-lg flex items-center gap-2"
                                             >
                                                 <UserCog className="w-5 h-5" />
                                                 Edit Profile
@@ -401,7 +401,7 @@ export function Header() {
                                         <motion.button
                                             whileTap={{ scale: 0.98 }}
                                             onClick={logout}
-                                            className="w-full px-6 py-3 text-left text-md font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg flex items-center gap-2"
+                                            className="w-full px-6 py-3 text-left text-md font-medium text-secondary-dark dark:text-secondary-light hover:text-secondary-darker dark:hover:text-secondary-lighter hover:bg-secondary-lighter dark:hover:bg-secondary-darker rounded-lg flex items-center gap-2"
                                         >
                                             <LogOut className="w-5 h-5" />
                                             Logout

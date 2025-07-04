@@ -28,7 +28,7 @@ export default function RootLayout({
         <html lang="en" suppressHydrationWarning className={dmSans.variable}>
             <body
                 suppressHydrationWarning
-                className="font-dm-sans antialiased flex flex-col bg-background"
+                className="font-dm-sans antialiased flex flex-col bg-light-background dark:bg-dark-background"
             >
                 <AuthProvider>
                     <Toaster position="top-center" />

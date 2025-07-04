@@ -181,20 +181,20 @@ export function AddDivisionModal({
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <Dialog.Panel className="mx-auto md:max-w-xl w-full rounded-lg bg-white p-6 transform ease-out duration-300 transition-all animate-in fade-in zoom-in-95">
                     <div className="text-center mb-6">
-                        <div className="mx-auto w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mb-3">
-                            <BuildingOfficeIcon className="h-6 w-6 text-orange-500" />
+                        <div className="mx-auto w-12 h-12 rounded-full bg-primary-lighter flex items-center justify-center mb-3">
+                            <BuildingOfficeIcon className="h-6 w-6 text-primary-dark" />
                         </div>
-                        <Dialog.Title className="text-xl font-semibold text-gray-900">
+                        <Dialog.Title className="text-xl font-semibold text-secondary-darker">
                             Add New Division
                         </Dialog.Title>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-secondary-lighter0">
                             Fill in the information to add a new division
                         </p>
                         <button
                             type="button"
                             aria-label="Close"
                             onClick={onClose}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 transition-colors"
+                            className="absolute top-4 right-4 text-secondary-main hover:text-secondary-lighter0 transition-colors"
                         >
                             <XMarkIcon className="h-6 w-6" />
                         </button>
@@ -204,13 +204,13 @@ export function AddDivisionModal({
                         <div>
                             <label
                                 htmlFor="department-select"
-                                className="block text-sm font-medium text-gray-700"
+                                className="block text-sm font-medium text-secondary-dark"
                             >
                                 Department
                             </label>
                             <select
                                 id="department-select"
-                                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                                className="mt-1 block w-full rounded-lg border border-secondary-lighter px-3 py-2.5 focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                                 value={formData.departmentId}
                                 onChange={
                                     (e) =>
@@ -244,13 +244,13 @@ export function AddDivisionModal({
                         <div>
                             <label
                                 htmlFor="semester-select"
-                                className="block text-sm font-medium text-gray-700"
+                                className="block text-sm font-medium text-secondary-dark"
                             >
                                 Semester
                             </label>
                             <select
                                 id="semester-select"
-                                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                                className="mt-1 block w-full rounded-lg border border-secondary-lighter px-3 py-2.5 focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                                 value={formData.semesterId}
                                 onChange={(e) =>
                                     setFormData({
@@ -290,7 +290,7 @@ export function AddDivisionModal({
                         <div>
                             <label
                                 htmlFor="division-name"
-                                className="block text-sm font-medium text-gray-700"
+                                className="block text-sm font-medium text-secondary-dark"
                             >
                                 Division Name
                             </label>
@@ -298,7 +298,7 @@ export function AddDivisionModal({
                                 id="division-name"
                                 type="text"
                                 placeholder="Enter division name (e.g., A, B)"
-                                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                                className="mt-1 block w-full rounded-lg border border-secondary-lighter px-3 py-2.5 focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                                 value={formData.divisionName}
                                 onChange={(e) =>
                                     setFormData({
@@ -315,7 +315,7 @@ export function AddDivisionModal({
                                 type="button"
                                 onClick={onClose}
                                 disabled={isSubmitting}
-                                className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-lg transition-colors flex items-center gap-2"
+                                className="px-4 py-2.5 text-sm font-medium text-secondary-dark hover:bg-secondary-lighter border border-secondary-light rounded-lg transition-colors flex items-center gap-2"
                             >
                                 <XCircleIcon className="h-5 w-5" />
                                 Cancel
@@ -323,7 +323,7 @@ export function AddDivisionModal({
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2.5 text-sm font-medium text-white bg-primary-dark hover:bg-primary-dark rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
                                     <>

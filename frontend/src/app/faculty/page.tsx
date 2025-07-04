@@ -339,17 +339,17 @@ export default function FacultyManagement() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 hover:bg-orange-100 rounded-full transition-colors"
+                        className="p-2 hover:bg-primary-lighter rounded-full transition-colors"
                     >
-                        <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+                        <ArrowLeftIcon className="h-6 w-6 text-secondary-dark" />
                     </button>
-                    <h1 className="text-3xl font-semibold text-gray-900">
+                    <h1 className="text-3xl font-semibold text-secondary-darker">
                         Faculty Management Portal
                     </h1>
                 </div>
                 <button
                     onClick={handleExportToExcel}
-                    className="flex items-center justify-center gap-2 bg-green-500 text-white px-5 py-2.5 rounded-lg hover:bg-green-600 transition-colors duration-200 shadow-sm whitespace-nowrap"
+                    className="flex items-center justify-center gap-2 bg-positive-lighter0 text-white px-5 py-2.5 rounded-lg hover:bg-positive-dark transition-colors duration-200 shadow-sm whitespace-nowrap"
                 >
                     <ArrowDownTrayIcon className="h-5 w-5" />
                     Export Excel
@@ -374,22 +374,22 @@ export default function FacultyManagement() {
             </div>
 
             {/* Search, Filters and Add Button */}
-            <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-stretch md:items-center bg-white p-4 md:p-5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-gray-100">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-stretch md:items-center bg-white p-4 md:p-5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-secondary-lighter">
                 <div className="flex-1 relative">
                     <input
                         type="text"
                         placeholder="Search faculty..."
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all shadow-sm"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-secondary-lighter focus:border-primary-light focus:ring-2 focus:ring-primary-lighter transition-all shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <UserGroupIcon className="h-5 w-5 text-gray-400 absolute left-3 top-3" />
+                    <UserGroupIcon className="h-5 w-5 text-secondary-main absolute left-3 top-3" />
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative">
                         <select
-                            className="px-4 py-2.5 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 bg-white shadow-sm min-w-[200px] text-gray-600 cursor-pointer appearance-none pr-10"
+                            className="px-4 py-2.5 rounded-lg border border-secondary-lighter focus:border-primary-light focus:ring-2 focus:ring-primary-lighter bg-white shadow-sm min-w-[200px] text-secondary-dark cursor-pointer appearance-none pr-10"
                             value={selectedDepartment}
                             onChange={(e) =>
                                 setSelectedDepartment(e.target.value)
@@ -402,28 +402,28 @@ export default function FacultyManagement() {
                                 </option>
                             ))}
                         </select>
-                        <ChevronDownIcon className="h-5 w-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <ChevronDownIcon className="h-5 w-5 text-secondary-main absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
 
                     <button
                         onClick={() =>
                             setSortOrder(sortOrder === "asc" ? "desc" : "asc")
                         }
-                        className="px-4 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+                        className="px-4 py-2.5 rounded-lg border border-secondary-lighter hover:bg-secondary-lighter flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
                     >
-                        <span className="text-gray-700">
+                        <span className="text-secondary-dark">
                             Sort {sortOrder === "asc" ? "A→Z" : "Z→A"}
                         </span>
                         {sortOrder === "asc" ? (
-                            <ArrowUpIcon className="h-4 w-4 text-gray-500" />
+                            <ArrowUpIcon className="h-4 w-4 text-secondary-lighter0" />
                         ) : (
-                            <ArrowDownIcon className="h-4 w-4 text-gray-500" />
+                            <ArrowDownIcon className="h-4 w-4 text-secondary-lighter0" />
                         )}
                     </button>
 
                     <button
                         onClick={() => setIsAddModalOpen(true)}
-                        className="flex items-center justify-center gap-2 bg-orange-400 text-white px-5 py-2.5 rounded-lg hover:bg-orange-500 transition-colors duration-200 shadow-sm whitespace-nowrap"
+                        className="flex items-center justify-center gap-2 bg-light-primary text-white px-5 py-2.5 rounded-lg hover:bg-primary-dark transition-colors duration-200 shadow-sm whitespace-nowrap"
                     >
                         <PlusIcon className="h-5 w-5" />
                         Add Faculty
@@ -432,52 +432,52 @@ export default function FacultyManagement() {
             </div>
 
             {/* Faculty Table */}
-            <div className="overflow-x-auto bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-gray-100">
-                <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-secondary-lighter">
+                <table className="min-w-full divide-y divide-secondary-lighter">
                     <thead>
-                        <tr className="bg-gray-50">
-                            <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                        <tr className="bg-secondary-lighter">
+                            <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                 Faculty Name
                             </th>
-                            <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                 Email
                             </th>
-                            <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                 Designation
                             </th>
-                            <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                 Department
                             </th>
-                            <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                 Joining Date
                             </th>
-                            <th className="px-6 py-4 text-left text-md font-semibold text-gray-600 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-md font-semibold text-secondary-dark uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-secondary-lighter">
                         {getFilteredFaculty().length > 0 ? (
                             getFilteredFaculty().map((faculty) => (
                                 <tr
                                     key={faculty.id}
-                                    className="hover:bg-orange-50/50 hover:shadow-sm transition-all duration-200"
+                                    className="hover:bg-primary-lighter/50 hover:shadow-sm transition-all duration-200"
                                 >
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <div className="h-10 w-10 rounded-full bg-orange-100/50 flex items-center justify-center">
-                                                <span className="text-orange-600 font-medium">
+                                            <div className="h-10 w-10 rounded-full bg-primary-lighter/50 flex items-center justify-center">
+                                                <span className="text-primary-dark font-medium">
                                                     {faculty.abbreviation}
                                                 </span>
                                             </div>
                                             <div className="ml-4">
-                                                <div className="text-md font-medium text-gray-900">
+                                                <div className="text-md font-medium text-secondary-darker">
                                                     {faculty.name}
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-600">
+                                    <td className="px-6 py-4 whitespace-nowrap text-md text-secondary-dark">
                                         <div className="flex items-center gap-2">
                                             {faculty.email}
                                             <button
@@ -486,20 +486,20 @@ export default function FacultyManagement() {
                                                         faculty.email
                                                     )
                                                 }
-                                                className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                                                className="p-1 hover:bg-secondary-lighter rounded-md transition-colors"
                                             >
-                                                <ClipboardIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                                                <ClipboardIcon className="h-4 w-4 text-secondary-main hover:text-secondary-dark" />
                                             </button>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-600">
+                                    <td className="px-6 py-4 whitespace-nowrap text-md text-secondary-dark">
                                         {designationMap[faculty.designation] ||
                                             faculty.designation}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-600">
+                                    <td className="px-6 py-4 whitespace-nowrap text-md text-secondary-dark">
                                         {faculty.department.name}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-600">
+                                    <td className="px-6 py-4 whitespace-nowrap text-md text-secondary-dark">
                                         {faculty.joiningDate
                                             ? new Date(
                                                   faculty.joiningDate
@@ -513,7 +513,7 @@ export default function FacultyManagement() {
                                                     setSelectedFaculty(faculty);
                                                     setIsEditModalOpen(true);
                                                 }}
-                                                className="text-orange-500 hover:text-orange-700"
+                                                className="text-primary-dark hover:text-primary-darker"
                                             >
                                                 <PencilIcon className="h-5 w-5" />
                                             </button>
@@ -521,7 +521,7 @@ export default function FacultyManagement() {
                                                 onClick={() =>
                                                     handleDelete(faculty.id)
                                                 }
-                                                className="text-red-500 hover:text-red-700"
+                                                className="text-negative-main hover:text-negative-dark"
                                             >
                                                 <TrashIcon className="h-5 w-5" />
                                             </button>
@@ -536,8 +536,8 @@ export default function FacultyManagement() {
                                     className="px-6 py-8 text-center"
                                 >
                                     <div className="flex flex-col items-center justify-center space-y-2">
-                                        <UserGroupIcon className="h-8 w-8 text-gray-300" />
-                                        <p className="text-gray-500 font-medium">
+                                        <UserGroupIcon className="h-8 w-8 text-secondary-light" />
+                                        <p className="text-secondary-lighter0 font-medium">
                                             No matching faculty members found
                                         </p>
                                     </div>

@@ -25,8 +25,8 @@ export function Card({ children, onClick, className }: CardProps) {
     return (
         <div
             onClick={onClick}
-            className={`p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 ${
-                onClick ? "cursor-pointer hover:bg-orange-50/30" : ""
+            className={`p-6 bg-white rounded-2xl shadow-sm border border-secondary-lighter hover:shadow-lg transition-all duration-300 ${
+                onClick ? "cursor-pointer hover:bg-primary-lighter/30" : ""
             } ${className || ""}`}
         >
             {children}
@@ -45,7 +45,9 @@ export function CardContent({ children, className }: CardContentProps) {
 export function CardTitle({ children, className }: CardTitleProps) {
     return (
         <h3
-            className={`text-xl font-semibold text-gray-900 ${className || ""}`}
+            className={`text-xl font-semibold text-secondary-darker ${
+                className || ""
+            }`}
         >
             {children}
         </h3>
