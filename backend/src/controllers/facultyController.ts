@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Designation, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 
 const prisma = new PrismaClient();
@@ -51,12 +51,12 @@ export const createFaculty = async (
 
     if (!faculty) {
       faculty = await prisma.faculty.upsert({
-        where: { abbreviation: facultyData.abbreviation },
+        where: { email: facultyData.email },
         create: {
           name: facultyData.name,
           abbreviation: facultyData.abbreviation,
           email: facultyData.email,
-          designation: facultyData.designation || 'Assistant Professor',
+          designation: Designation.AsstProf, // to be updated based on actual data later
           seatingLocation: facultyData.seatingLocation,
           image: facultyData.image,
           joiningDate: facultyData.joiningDate || new Date(),
@@ -173,7 +173,7 @@ export const batchCreateFaculties = async (
 
     for (const fac of faculties) {
       const faculty = await prisma.faculty.upsert({
-        where: { abbreviation: fac.abbreviation },
+        where: { email: fac.email },
         create: {
           name: fac.name,
           abbreviation: fac.abbreviation,

@@ -25,9 +25,12 @@ export const GROUPED_BAR_CHART = `${API_URL}/faculty-analytics/grouped-bar-chart
 export const LINE_CHART = `${API_URL}/faculty-analytics/line-chart`;
 export const GET_SUBJECTS = `${API_URL}/faculty-analytics/get-subjects`;
 export const SUBJECT_WISE = `${API_URL}/faculty-analytics/subject-wise`;
+export const GET_FACULTY_PERFORMANCE_YEAR = `${API_URL}/faculty-analytics/get-faculty-performance-year`;
+export const GET_ALL_FACULTY_PERFORMANCE_FOR_YEAR = `${API_URL}/faculty-analytics/get-all-faculty-performance`;
 
 // Faculty-matrix endpoints
 export const FACULTY_MATRIX_DEPARTMENTS = `${API_URL}/departments`;
+export const API_ACADEMIC_YEARS = `${API_URL}/academic-years`;
 export const FACULTY_MATRIX_UPLOAD = `${API_URL}/upload/faculty-matrix`;
 
 // Dashboard endpoints

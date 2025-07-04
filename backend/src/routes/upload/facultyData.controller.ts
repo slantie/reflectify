@@ -42,7 +42,7 @@ async function ensureCollege() {
   let college = collegeCache.get(COLLEGE_ID);
   if (!college) {
     college = await prisma.college.upsert({
-      where: { id: COLLEGE_ID },
+      where: { id: COLLEGE_ID, isDeleted: false }, // Filter out soft-deleted colleges
       create: {
         id: COLLEGE_ID,
         name: 'LDRP Institute of Technology and Research',
@@ -51,6 +51,7 @@ async function ensureCollege() {
         contactNumber: '+91-79-23241492',
         logo: 'ldrp-logo.png',
         images: {}, // Assuming this is a JSON field
+        isDeleted: false, // Ensure new college is not soft-deleted
       },
       update: {}, // No specific update needed if it exists
     });
@@ -77,7 +78,7 @@ const getCellValue = (cell: ExcelJS.Cell): string | number | Date | null => {
   }
 
   if (typeof value === 'object' && 'hyperlink' in value && 'text' in value) {
-    return value.text || null; // Return null if text is empty for hyperlink cells
+    return value.text?.toString() || null; // Return null if text is empty for hyperlink cells
   }
 
   if (typeof value === 'number') {
@@ -88,7 +89,7 @@ const getCellValue = (cell: ExcelJS.Cell): string | number | Date | null => {
 };
 
 /**
- * Formats a Date object to a Laufe-MM-DD string for consistent comparison.
+ * Formats a Date object to a YYYY-MM-DD string for consistent comparison.
  * @param {Date | null} date - The date to format.
  * @returns {string} The formatted date string, or an empty string if null/invalid.
  */
@@ -150,11 +151,19 @@ export const uploadFacultyData = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  // Initialize these variables at the top to ensure they are always available for the final response
+  let addedCount = 0;
+  let updatedCount = 0;
+  let unchangedCount = 0;
+  let skippedCount = 0;
+  const skippedRowsDetails: string[] = [];
+
   try {
     // Multer middleware should have already processed the file and populated req.file
     if (!req.file) {
       res.status(400).json({
         message: 'No file uploaded or file processing failed by multer.',
+        skippedRowsDetails: skippedRowsDetails,
       });
       return;
     }
@@ -164,16 +173,14 @@ export const uploadFacultyData = async (
     const worksheet = workbook.getWorksheet(1); // Get the first worksheet
 
     if (!worksheet) {
-      res.status(400).json({ message: 'Invalid worksheet' });
+      res.status(400).json({
+        message: 'Invalid worksheet: Worksheet not found in the Excel file.',
+        skippedRowsDetails: skippedRowsDetails,
+      });
       return;
     }
 
     const startTime = Date.now();
-
-    let addedCount = 0;
-    let updatedCount = 0;
-    let unchangedCount = 0;
-    let skippedCount = 0;
 
     // Ensure college record exists and get its ID
     const college = await ensureCollege();
@@ -188,7 +195,6 @@ export const uploadFacultyData = async (
       const row = worksheet.getRow(rowNumber);
 
       // Extract data from specific columns based on your Excel template
-      // Use getCellValue and then explicitly convert to string and trim, handling null
       const name = getCellValue(row.getCell(2))?.toString()?.trim() || ''; // Column B
       const email =
         getCellValue(row.getCell(3))?.toString()?.trim()?.toLowerCase() || ''; // Column C - IMPORTANT: Normalize to lowercase
@@ -207,42 +213,44 @@ export const uploadFacultyData = async (
       if (!deptInput) missingFields.push('Department (F)');
 
       if (missingFields.length > 0) {
-        console.warn(
-          `Skipping row ${rowNumber} due to missing essential data: ${missingFields.join(', ')}. Row data: Name='${name}', Email='${email}', Dept='${deptInput}'.`
-        );
+        const message = `Row ${rowNumber}: Skipping due to missing essential data: ${missingFields.join(', ')}. Row data: Name='${name}', Email='${email}', Dept='${deptInput}'.`;
+        console.warn(message);
+        skippedRowsDetails.push(message);
         skippedCount++;
         continue;
       }
 
-      // Map Designation String to Enum
+      // Map Designation String to Enum (UPDATED to match schema enum values)
       let facultyDesignation: Designation;
       const lowerCaseDesignation = designationString.toLowerCase();
       switch (lowerCaseDesignation) {
-        case 'head of department':
-          facultyDesignation = Designation.HoD;
+        case 'hod':
+        case 'head of department': // Allow both for flexibility
+          facultyDesignation = Designation.HOD;
           break;
-        case 'assistant professor':
-          facultyDesignation = Designation.Asst_Prof;
+        case 'asstprof':
+        case 'assistant professor': // Allow both
+          facultyDesignation = Designation.AsstProf;
           break;
-        case 'lab assistant':
-          facultyDesignation = Designation.Lab_Asst;
+        case 'labasst':
+        case 'lab assistant': // Allow both
+          facultyDesignation = Designation.LabAsst;
           break;
         default:
-          console.warn(
-            `Unknown designation '${designationString}' for faculty '${name}' (row ${rowNumber}). Defaulting to Asst_Prof.`
-          );
-          facultyDesignation = Designation.Asst_Prof; // Default or handle as an error
+          const message = `Row ${rowNumber}: Unknown designation '${designationString}' for faculty '${name}'. Defaulting to AsstProf.`;
+          console.warn(message);
+          skippedRowsDetails.push(message); // Log this as a warning for the user
+          facultyDesignation = Designation.AsstProf; // Default or handle as an error
           break;
       }
 
       try {
-        // --- Department Upsert Logic (Revised for Consistency) ---
+        // --- Department Upsert Logic (Revised for Consistency and soft-delete) ---
         let department = departmentCache.get(deptInput); // Try to get from cache using original input string
         let canonicalDept: { name: string; abbreviation: string } | undefined;
 
         if (!department) {
           // Attempt to find canonical department details from our mapping
-          // First, check if deptInput is an abbreviation
           canonicalDept = DEPARTMENT_MAPPING[deptInput.toUpperCase()]; // Use uppercase for map key lookup
 
           if (!canonicalDept) {
@@ -260,9 +268,9 @@ export const uploadFacultyData = async (
 
           if (!canonicalDept) {
             // If still not found in our predefined map, use the input as is, but warn
-            console.warn(
-              `Department '${deptInput}' not found in predefined mapping. Using input as canonical.`
-            );
+            const message = `Row ${rowNumber}: Department '${deptInput}' not found in predefined mapping. Using input as canonical.`;
+            console.warn(message);
+            skippedRowsDetails.push(message); // Add warning to details
             canonicalDept = { name: deptInput, abbreviation: deptInput }; // Fallback to using input as both
           }
 
@@ -274,6 +282,7 @@ export const uploadFacultyData = async (
                 name: canonicalDept.name,
                 collegeId: college.id,
               },
+              isDeleted: false, // Only consider non-soft-deleted departments
             },
             create: {
               name: canonicalDept.name,
@@ -281,6 +290,7 @@ export const uploadFacultyData = async (
               hodName: `HOD of ${canonicalDept.name}`, // Placeholder HOD name
               hodEmail: `hod.${canonicalDept.abbreviation.toLowerCase()}@ldrp.ac.in`, // Placeholder HOD email
               collegeId: college.id,
+              isDeleted: false, // Ensure new department is not soft-deleted
             },
             update: {
               // Ensure existing department's name and abbreviation are updated to canonical form
@@ -292,9 +302,9 @@ export const uploadFacultyData = async (
         }
 
         if (!department) {
-          console.warn(
-            `Skipping row ${rowNumber}: Department '${deptInput}' (Column F) could not be created or found after all attempts.`
-          );
+          const message = `Row ${rowNumber}: Department '${deptInput}' (Column F) could not be created or found after all attempts.`;
+          console.warn(message);
+          skippedRowsDetails.push(message);
           skippedCount++;
           continue;
         }
@@ -312,9 +322,9 @@ export const uploadFacultyData = async (
           if (parsedDate) {
             actualJoiningDate = parsedDate;
           } else {
-            console.warn(
-              `Skipping row ${rowNumber}: Invalid Joining Date string format (Column G): '${rawJoiningDateValue}'. Expected DD-MM-YYYY or DD/MM/YYYY if not a standard date cell.`
-            );
+            const message = `Row ${rowNumber}: Invalid Joining Date string format (Column G): '${rawJoiningDateValue}'. Expected DD-MM-YYYY or DD/MM/YYYY if not a standard date cell.`;
+            console.warn(message);
+            skippedRowsDetails.push(message);
             skippedCount++;
             continue;
           }
@@ -332,10 +342,9 @@ export const uploadFacultyData = async (
           departmentId: department.id,
         };
 
-        // --- Faculty Upsert/Update Logic ---
-        // Use normalized email for findUnique as it's the reliable unique identifier.
+        // --- Faculty Upsert/Update Logic (with soft-delete filter) ---
         const existingFaculty = await prisma.faculty.findUnique({
-          where: { email: newFacultyData.email }, // Lookup by unique (normalized) email
+          where: { email: newFacultyData.email, isDeleted: false }, // Lookup by unique (normalized) email, filter out soft-deleted
           select: {
             id: true, // Need ID for update
             name: true,
@@ -397,6 +406,7 @@ export const uploadFacultyData = async (
                 seatingLocation: newFacultyData.seatingLocation,
                 joiningDate: newFacultyData.joiningDate || undefined, // Send Date object or undefined for null
                 departmentId: newFacultyData.departmentId,
+                isDeleted: false, // Ensure it's not soft-deleted if it was for some reason
               },
             });
             updatedCount++;
@@ -416,18 +426,26 @@ export const uploadFacultyData = async (
                 connect: { id: newFacultyData.departmentId }, // Connect to existing department
               },
               joiningDate: newFacultyData.joiningDate || undefined, // Pass Date object or undefined for null
+              isDeleted: false, // Ensure new faculty is not soft-deleted
             },
           });
           addedCount++;
         }
 
         // --- Update HoD information if the current faculty is an HoD ---
-        if (facultyDesignation === Designation.HoD) {
+        if (facultyDesignation === Designation.HOD) {
+          // Use HOD enum value
           // Only update if the department object is valid and HOD info is different
+          // Fetch the department again with hodName and hodEmail to ensure latest state for comparison
+          const currentDepartment = await prisma.department.findUnique({
+            where: { id: department.id, isDeleted: false }, // Filter out soft-deleted departments
+            select: { hodName: true, hodEmail: true },
+          });
+
           if (
-            department &&
-            (department.hodName !== newFacultyData.name ||
-              department.hodEmail !== newFacultyData.email)
+            currentDepartment &&
+            (currentDepartment.hodName !== newFacultyData.name ||
+              currentDepartment.hodEmail !== newFacultyData.email)
           ) {
             try {
               await prisma.department.update({
@@ -437,20 +455,20 @@ export const uploadFacultyData = async (
                   hodEmail: newFacultyData.email,
                 },
               });
-            } catch (updateError) {
-              console.error(
-                `Error updating HOD for department ${department.name}:`,
-                updateError
-              );
+            } catch (updateError: any) {
+              // Add type for updateError
+              const message = `Row ${rowNumber}: Error updating HOD for department ${department.name}: ${updateError.message || 'Unknown error'}.`;
+              console.error(message, updateError);
+              skippedRowsDetails.push(message); // Add to details for frontend
+              // Do not increment skippedCount here as the faculty record itself was processed
             }
           }
         }
       } catch (innerError: any) {
         // Catch any errors that occur during the processing of a single row.
-        console.error(
-          `Error processing row ${rowNumber} (Email: ${email || 'N/A'}):`, // Log email if available
-          innerError
-        );
+        const message = `Row ${rowNumber}: Error processing data for Email '${email || 'N/A'}': ${innerError.message || 'Unknown error'}.`;
+        console.error(message, innerError); // Log full error for backend debugging
+        skippedRowsDetails.push(message);
         skippedCount++;
       }
     }
@@ -461,21 +479,24 @@ export const uploadFacultyData = async (
       ((endTime - startTime) / 1000).toFixed(2),
       'seconds'
     );
-    console.log(
-      `Summary: Added ${addedCount}, Updated ${updatedCount}, Unchanged ${unchangedCount}, Skipped ${skippedCount} rows.`
-    );
 
+    // Send a summary response back to the client.
+    // This is the ONLY place a success response is sent.
     res.status(200).json({
-      message: 'Faculty data import summary',
+      message: 'Faculty data import complete.',
       rowsAffected: addedCount + updatedCount,
     });
   } catch (error: any) {
     // Catch any top-level errors (e.g., file upload issues, workbook loading).
     console.error('Error processing faculty data:', error);
-    res.status(500).json({
-      message: 'Error processing faculty data',
-      error: error.message || 'Unknown error',
-    });
+    // Ensure response is only sent if headers haven't been sent already
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: 'Error processing faculty data',
+        error: error.message || 'Unknown error',
+        skippedRowsDetails: skippedRowsDetails, // Include details even on top-level error if any were collected
+      });
+    }
   } finally {
     // Clear caches after request completion
     collegeCache.clear();

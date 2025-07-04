@@ -30,9 +30,14 @@ enum FormStatus {
 }
 
 enum Designation {
-    HoD
-    Asst_Prof
-    Lab_Asst
+    HOD
+    AsstProf
+    LabAsst
+}
+
+enum SemesterTypeEnum {
+    ODD
+    EVEN
 }
 
 model AcademicYear {
@@ -40,6 +45,8 @@ model AcademicYear {
     yearString String    @unique @map("year_string")
     startDate  DateTime? @map("start_date")
     endDate    DateTime? @map("end_date")
+    isActive   Boolean   @default(false) @map("is_active")
+    isDeleted  Boolean   @default(false) @map("is_deleted") // NEW: isDeleted
 
     semesters          Semester[]
     students           Student[]
@@ -57,6 +64,7 @@ model OTP {
     email     String
     otp       String
     expiresAt DateTime @map("expires_at")
+    isDeleted Boolean  @default(false) @map("is_deleted") // NEW: isDeleted
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -64,28 +72,32 @@ model OTP {
 }
 
 model College {
-    id            String       @id @default(uuid())
-    name          String       @unique
-    websiteUrl    String       @map("website_url")
+    id            String  @id @default(uuid())
+    name          String  @unique
+    websiteUrl    String  @map("website_url")
     address       String
-    contactNumber String       @map("contact_number")
+    contactNumber String  @map("contact_number")
     logo          String
     images        Json
-    departments   Department[]
-    createdAt     DateTime     @default(now()) @map("created_at")
-    updatedAt     DateTime     @updatedAt @map("updated_at")
+    isDeleted     Boolean @default(false) @map("is_deleted") // NEW: isDeleted
+
+    departments Department[]
+    createdAt   DateTime     @default(now()) @map("created_at")
+    updatedAt   DateTime     @updatedAt @map("updated_at")
 
     @@map("colleges")
 }
 
 model Department {
-    id                String              @id @default(uuid())
-    name              String
-    abbreviation      String
-    hodName           String              @map("hod_name")
-    hodEmail          String              @map("hod_email")
-    collegeId         String              @map("college_id")
-    college           College             @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+    id           String  @id @default(uuid())
+    name         String
+    abbreviation String
+    hodName      String  @map("hod_name")
+    hodEmail     String  @map("hod_email")
+    collegeId    String  @map("college_id")
+    isDeleted    Boolean @default(false) @map("is_deleted") // NEW: isDeleted
+
+    college           College             @relation(fields: [collegeId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
     semesters         Semester[]
     faculties         Faculty[]
     subjects          Subject[]
@@ -101,12 +113,16 @@ model Department {
 }
 
 model Semester {
-    id             String @id @default(uuid())
-    departmentId   String @map("department_id")
-    semesterNumber Int    @map("semester_number")
-    academicYearId String @map("academic_year_id")
+    id             String           @id @default(uuid())
+    departmentId   String           @map("department_id")
+    semesterNumber Int              @map("semester_number")
+    academicYearId String           @map("academic_year_id")
+    startDate      DateTime?        @map("start_date")
+    endDate        DateTime?        @map("end_date")
+    semesterType   SemesterTypeEnum @map("semester_type")
+    isDeleted      Boolean          @default(false) @map("is_deleted") // NEW: isDeleted
 
-    department   Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+    department   Department   @relation(fields: [departmentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
     academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
 
     divisions   Division[]
@@ -116,20 +132,25 @@ model Semester {
     createdAt   DateTime            @default(now()) @map("created_at")
     updatedAt   DateTime            @updatedAt @map("updated_at")
 
-    @@unique([departmentId, semesterNumber, academicYearId])
+    promotedFromStudents PromotionHistory[] @relation("FromSemester")
+    promotedToStudents   PromotionHistory[] @relation("ToSemester")
+
+    @@unique([departmentId, semesterNumber, academicYearId, semesterType])
     @@index([departmentId])
     @@index([academicYearId])
     @@map("semesters")
 }
 
 model Division {
-    id                 String              @id @default(uuid())
-    departmentId       String              @map("department_id")
-    semesterId         String              @map("semester_id")
-    divisionName       String              @map("division_name")
-    studentCount       Int                 @map("student_count")
-    department         Department          @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-    semester           Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+    id           String  @id @default(uuid())
+    departmentId String  @map("department_id")
+    semesterId   String  @map("semester_id")
+    divisionName String  @map("division_name")
+    studentCount Int     @map("student_count")
+    isDeleted    Boolean @default(false) @map("is_deleted") // NEW: isDeleted
+
+    department         Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    semester           Semester            @relation(fields: [semesterId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
     mentors            Faculty[]           @relation("DivisionMentors")
     students           Student[]
     subjectAllocations SubjectAllocation[]
@@ -144,15 +165,17 @@ model Division {
 }
 
 model Subject {
-    id               String              @id @default(uuid())
-    departmentId     String              @map("department_id")
-    semesterId       String              @map("semester_id")
-    name             String
-    abbreviation     String
-    subjectCode      String              @map("subject_code")
-    type             SubjectType         @default(MANDATORY)
-    department       Department          @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-    semester         Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+    id           String      @id @default(uuid())
+    departmentId String      @map("department_id")
+    semesterId   String      @map("semester_id")
+    name         String
+    abbreviation String
+    subjectCode  String      @map("subject_code")
+    type         SubjectType @default(MANDATORY)
+    isDeleted    Boolean     @default(false) @map("is_deleted") // NEW: isDeleted
+
+    department       Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    semester         Semester            @relation(fields: [semesterId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
     allocations      SubjectAllocation[]
     createdAt        DateTime            @default(now()) @map("created_at")
     updatedAt        DateTime            @updatedAt @map("updated_at")
@@ -165,16 +188,18 @@ model Subject {
 }
 
 model Faculty {
-    id                String              @id @default(uuid())
-    name              String
-    abbreviation      String?
-    email             String              @unique
-    designation       Designation
-    seatingLocation   String              @map("seating_location")
-    image             String?
-    joiningDate       DateTime?           @map("joining_date")
-    departmentId      String              @map("department_id")
-    department        Department          @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+    id              String      @id @default(uuid())
+    name            String
+    abbreviation    String?
+    email           String      @unique
+    designation     Designation
+    seatingLocation String      @map("seating_location")
+    image           String?
+    joiningDate     DateTime?   @map("joining_date")
+    departmentId    String      @map("department_id")
+    isDeleted       Boolean     @default(false) @map("is_deleted") // NEW: isDeleted
+
+    department        Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
     mentoredDivisions Division[]          @relation("DivisionMentors")
     allocations       SubjectAllocation[]
     createdAt         DateTime            @default(now()) @map("created_at")
@@ -198,16 +223,18 @@ model Student {
     email            String  @unique
     image            String?
     phoneNumber      String  @map("phone_number")
+    isDeleted        Boolean @default(false) @map("is_deleted") // NEW: isDeleted
 
-    department   Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-    semester     Semester     @relation(fields: [semesterId], references: [id], onDelete: Cascade)
-    division     Division     @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+    department   Department   @relation(fields: [departmentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    semester     Semester     @relation(fields: [semesterId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    division     Division     @relation(fields: [divisionId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
     academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
 
-    responses  StudentResponse[]
-    createdAt  DateTime          @default(now()) @map("created_at")
-    updatedAt  DateTime          @updatedAt @map("updated_at")
-    formAccess FormAccess[]
+    responses        StudentResponse[]
+    promotionHistory PromotionHistory[]
+    createdAt        DateTime           @default(now()) @map("created_at")
+    updatedAt        DateTime           @updatedAt @map("updated_at")
+    formAccess       FormAccess[]
 
     @@index([departmentId, semesterId, divisionId, academicYearId])
     @@index([divisionId])
@@ -223,6 +250,7 @@ model Admin {
     email       String   @unique
     password    String
     isSuper     Boolean  @default(false) @map("is_super")
+    isDeleted   Boolean  @default(false) @map("is_deleted") // NEW: isDeleted
     createdAt   DateTime @default(now()) @map("created_at")
     updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -239,12 +267,13 @@ model SubjectAllocation {
     lectureType    LectureType
     batch          String      @default("-")
     academicYearId String      @map("academic_year_id")
+    isDeleted      Boolean     @default(false) @map("is_deleted") // NEW: isDeleted
 
-    department   Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-    faculty      Faculty      @relation(fields: [facultyId], references: [id], onDelete: Cascade)
-    subject      Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-    division     Division     @relation(fields: [divisionId], references: [id], onDelete: Cascade)
-    semester     Semester     @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+    department   Department   @relation(fields: [departmentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    faculty      Faculty      @relation(fields: [facultyId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    subject      Subject      @relation(fields: [subjectId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    division     Division     @relation(fields: [divisionId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    semester     Semester     @relation(fields: [semesterId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
     academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
 
     feedbackForms FeedbackForm[]
@@ -265,22 +294,24 @@ model SubjectAllocation {
 }
 
 model FeedbackForm {
-    id                  String             @id @default(uuid())
-    divisionId          String             @map("division_id")
-    subjectAllocationId String             @map("subject_allocation_id")
+    id                  String     @id @default(uuid())
+    divisionId          String     @map("division_id")
+    subjectAllocationId String     @map("subject_allocation_id")
     title               String
-    startDate           DateTime           @map("start_date")
-    endDate             DateTime           @map("end_date")
-    status              FormStatus         @default(DRAFT)
-    accessHash          String             @unique @map("access_hash")
-    isDeleted           Boolean            @default(false) @map("is_deleted")
-    division            Division           @relation(fields: [divisionId], references: [id], onDelete: Cascade)
-    subjectAllocation   SubjectAllocation  @relation(fields: [subjectAllocationId], references: [id], onDelete: Cascade)
-    questions           FeedbackQuestion[]
-    responses           StudentResponse[]
-    createdAt           DateTime           @default(now()) @map("created_at")
-    updatedAt           DateTime           @updatedAt @map("updated_at")
-    formAccess          FormAccess[]
+    startDate           DateTime   @map("start_date")
+    endDate             DateTime   @map("end_date")
+    isExpired           Boolean?   @default(false)
+    status              FormStatus @default(DRAFT)
+    accessHash          String     @unique @map("access_hash")
+    isDeleted           Boolean    @default(false) @map("is_deleted") // ALREADY EXISTS, ENSURED consistency with map name
+
+    division          Division           @relation(fields: [divisionId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    subjectAllocation SubjectAllocation  @relation(fields: [subjectAllocationId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    questions         FeedbackQuestion[]
+    responses         StudentResponse[]
+    createdAt         DateTime           @default(now()) @map("created_at")
+    updatedAt         DateTime           @updatedAt @map("updated_at")
+    formAccess        FormAccess[]
 
     @@index([divisionId, subjectAllocationId, status])
     @@index([subjectAllocationId])
@@ -288,15 +319,17 @@ model FeedbackForm {
 }
 
 model FormAccess {
-    id          String       @id @default(uuid())
+    id          String  @id @default(uuid())
     formId      String
     studentId   String
-    accessToken String       @unique
-    isSubmitted Boolean      @default(false)
-    form        FeedbackForm @relation(fields: [formId], references: [id], onDelete: Cascade)
-    student     Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-    createdAt   DateTime     @default(now()) @map("created_at")
-    updatedAt   DateTime     @updatedAt @map("updated_at")
+    accessToken String  @unique
+    isSubmitted Boolean @default(false)
+    isDeleted   Boolean @default(false) @map("is_deleted") // NEW: isDeleted
+
+    form      FeedbackForm @relation(fields: [formId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    student   Student      @relation(fields: [studentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    createdAt DateTime     @default(now()) @map("created_at")
+    updatedAt DateTime     @updatedAt @map("updated_at")
 
     @@unique([formId, studentId])
     @@index([formId])
@@ -305,35 +338,38 @@ model FormAccess {
 }
 
 model QuestionCategory {
-    id           String             @id @default(uuid())
-    categoryName String             @map("category_name")
+    id           String  @id @default(uuid())
+    categoryName String  @map("category_name")
     description  String
-    questions    FeedbackQuestion[]
-    createdAt    DateTime           @default(now()) @map("created_at")
-    updatedAt    DateTime           @updatedAt @map("updated_at")
+    isDeleted    Boolean @default(false) @map("is_deleted") // NEW: isDeleted
+
+    questions FeedbackQuestion[]
+    createdAt DateTime           @default(now()) @map("created_at")
+    updatedAt DateTime           @updatedAt @map("updated_at")
 
     @@map("question_categories")
 }
 
 model FeedbackQuestion {
-    id           String            @id @default(uuid())
-    formId       String            @map("form_id")
-    categoryId   String            @map("category_id")
-    facultyId    String            @map("faculty_id")
-    subjectId    String            @map("subject_id")
-    batch        String            @default("None") @map("batch")
+    id           String  @id @default(uuid())
+    formId       String  @map("form_id")
+    categoryId   String  @map("category_id")
+    facultyId    String  @map("faculty_id")
+    subjectId    String  @map("subject_id")
+    batch        String  @default("None") @map("batch")
     text         String
     type         String
-    isRequired   Boolean           @default(true) @map("is_required")
-    displayOrder Int               @map("display_order")
-    isDeleted    Boolean           @default(false) @map("is_deleted")
-    form         FeedbackForm      @relation(fields: [formId], references: [id], onDelete: Cascade)
-    category     QuestionCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-    faculty      Faculty           @relation(fields: [facultyId], references: [id], onDelete: Cascade)
-    subject      Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-    responses    StudentResponse[]
-    createdAt    DateTime          @default(now()) @map("created_at")
-    updatedAt    DateTime          @updatedAt @map("updated_at")
+    isRequired   Boolean @default(true) @map("is_required")
+    displayOrder Int     @map("display_order")
+    isDeleted    Boolean @default(false) @map("is_deleted") // ALREADY EXISTS, ENSURED consistency with map name
+
+    form      FeedbackForm      @relation(fields: [formId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    category  QuestionCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    faculty   Faculty           @relation(fields: [facultyId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    subject   Subject           @relation(fields: [subjectId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    responses StudentResponse[]
+    createdAt DateTime          @default(now()) @map("created_at")
+    updatedAt DateTime          @updatedAt @map("updated_at")
 
     @@index([formId, categoryId])
     @@index([categoryId])
@@ -343,18 +379,19 @@ model FeedbackQuestion {
 }
 
 model StudentResponse {
-    id          String           @id @default(uuid())
-    studentId   String           @map("student_id")
-    formId      String           @map("form_id")
-    questionId  String           @map("question_id")
+    id          String   @id @default(uuid())
+    studentId   String   @map("student_id")
+    formId      String   @map("form_id")
+    questionId  String   @map("question_id")
     value       Json
-    submittedAt DateTime         @default(now()) @map("submitted_at")
-    isDeleted   Boolean          @default(false) @map("is_deleted")
-    student     Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-    form        FeedbackForm     @relation(fields: [formId], references: [id], onDelete: Cascade)
-    question    FeedbackQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-    createdAt   DateTime         @default(now()) @map("created_at")
-    updatedAt   DateTime         @updatedAt @map("updated_at")
+    submittedAt DateTime @default(now()) @map("submitted_at")
+    isDeleted   Boolean  @default(false) @map("is_deleted") // ALREADY EXISTS, ENSURED consistency with map name
+
+    student   Student          @relation(fields: [studentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    form      FeedbackForm     @relation(fields: [formId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    question  FeedbackQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    createdAt DateTime         @default(now()) @map("created_at")
+    updatedAt DateTime         @updatedAt @map("updated_at")
 
     @@index([studentId, formId])
     @@index([formId])
@@ -372,8 +409,9 @@ model FeedbackAnalytics {
     responseCount       Int      @map("response_count")
     completionRate      Float    @map("completion_rate")
     calculatedAt        DateTime @map("calculated_at")
+    isDeleted           Boolean  @default(false) @map("is_deleted") // NEW: isDeleted
 
-    subjectAllocation SubjectAllocation @relation(fields: [subjectAllocationId], references: [id], onDelete: Cascade)
+    subjectAllocation SubjectAllocation @relation(fields: [subjectAllocationId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
     academicYear      AcademicYear      @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
 
     createdAt DateTime @default(now()) @map("created_at")
@@ -392,6 +430,7 @@ model AnalyticsView {
     viewName        String   @map("view_name")
     queryDefinition String   @map("query_definition")
     parameters      Json
+    isDeleted       Boolean  @default(false) @map("is_deleted") // NEW: isDeleted
     createdAt       DateTime @default(now()) @map("created_at")
     updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -404,6 +443,7 @@ model CustomReport {
     description  String
     reportConfig Json     @map("report_config")
     isActive     Boolean  @default(true) @map("is_active")
+    isDeleted    Boolean  @default(false) @map("is_deleted") // NEW: isDeleted
     createdAt    DateTime @default(now()) @map("created_at")
     updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -445,8 +485,10 @@ model FeedbackSnapshot {
     submittedAt   DateTime @map("submitted_at")
 
     formDeleted Boolean @default(false) @map("form_deleted")
+    isDeleted   Boolean @default(false) @map("is_deleted") // NEW: isDeleted for the snapshot itself
 
     createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
 
     @@index([studentId])
     @@index([formId])
@@ -456,4 +498,25 @@ model FeedbackSnapshot {
     @@index([academicYearId])
     @@index([submittedAt])
     @@map("feedback_snapshots")
+}
+
+model PromotionHistory {
+    id             String   @id @default(uuid())
+    studentId      String   @map("student_id")
+    fromSemesterId String   @map("from_semester_id")
+    toSemesterId   String   @map("to_semester_id")
+    promotedAt     DateTime @default(now()) @map("promoted_at")
+    isDeleted      Boolean  @default(false) @map("is_deleted") // NEW: isDeleted
+
+    student      Student  @relation(fields: [studentId], references: [id], onDelete: Restrict) // UPDATED: onDelete: Cascade -> Restrict
+    fromSemester Semester @relation("FromSemester", fields: [fromSemesterId], references: [id], onDelete: Restrict)
+    toSemester   Semester @relation("ToSemester", fields: [toSemesterId], references: [id], onDelete: Restrict)
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@index([studentId])
+    @@index([fromSemesterId])
+    @@index([toSemesterId])
+    @@map("promotion_history")
 }

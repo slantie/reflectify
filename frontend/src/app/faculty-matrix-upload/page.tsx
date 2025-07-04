@@ -15,6 +15,7 @@ import {
 import {
     FACULTY_MATRIX_DEPARTMENTS,
     FACULTY_MATRIX_UPLOAD,
+    API_ACADEMIC_YEARS, // New API endpoint constant
 } from "@/lib/apiEndPoints";
 
 interface Department {
@@ -23,26 +24,37 @@ interface Department {
     abbreviation: string;
 }
 
-// interface ClassSchedule {
-//   [key: string]: {
-//     subjects: {
-//       subject_code: string;
-//       type: "Lecture" | "Lab";
-//       faculty: string;
-//       batch?: string;
-//     }[];
-//   };
-// }
-
 interface TableRow {
     [key: string]: string | null;
 }
 
+// Updated AcademicYear interface to match backend's 'yearString'
+interface AcademicYear {
+    id: string;
+    yearString: string; // Changed from 'year' to 'yearString'
+}
+
+interface SemesterRun {
+    id: string;
+    type: "Odd" | "Even";
+}
+
+// Dummy data for Semester Run (Academic Years will be fetched)
+const SEMESTER_RUNS: SemesterRun[] = [
+    { id: "odd", type: "Odd" },
+    { id: "even", type: "Even" },
+];
+
 export default function FacultyMatrixUpload() {
     const router = useRouter();
     const [departments, setDepartments] = useState<Department[]>([]);
+    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]); // State to store fetched academic years
     const [selectedDepartment, setSelectedDepartment] =
         useState<Department | null>(null);
+    const [selectedAcademicYear, setSelectedAcademicYear] =
+        useState<AcademicYear | null>(null);
+    const [selectedSemesterRun, setSelectedSemesterRun] =
+        useState<SemesterRun | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [activeTable, setActiveTable] = useState<TableRow[] | null>(null);
@@ -59,8 +71,25 @@ export default function FacultyMatrixUpload() {
         }
     };
 
+    // New function to fetch academic years
+    const fetchAcademicYears = async () => {
+        try {
+            const response = await fetch(API_ACADEMIC_YEARS);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const { academicYears: fetchedYears } = await response.json(); // Destructure academicYears from response
+            setAcademicYears(fetchedYears || []);
+        } catch (error) {
+            console.error('Error fetching academic years:', error);
+            toast.error("Failed to load academic years");
+            setAcademicYears([]);
+        }
+    };
+
     useEffect(() => {
         fetchDepartments();
+        fetchAcademicYears(); // Call the new fetch function
     }, []);
 
     useEffect(() => {
@@ -106,7 +135,6 @@ export default function FacultyMatrixUpload() {
     };
 
     const handleClearFile = () => {
-        // Reset file input by accessing the DOM element
         const fileInput = document.querySelector(
             'input[type="file"]'
         ) as HTMLInputElement;
@@ -118,8 +146,8 @@ export default function FacultyMatrixUpload() {
     };
 
     const handleUpload = async () => {
-        if (!selectedFile || !selectedDepartment) {
-            toast.error("Please select both department and file");
+        if (!selectedFile || !selectedDepartment || !selectedAcademicYear || !selectedSemesterRun) {
+            toast.error("Please select department, academic year, semester run, and a file");
             return;
         }
 
@@ -127,6 +155,8 @@ export default function FacultyMatrixUpload() {
         const formData = new FormData();
         formData.append("file", selectedFile);
         formData.append("deptAbbreviation", selectedDepartment.abbreviation);
+        formData.append("academicYear", selectedAcademicYear.yearString); // Use yearString from the fetched object
+        formData.append("semesterRun", selectedSemesterRun.type);
 
         try {
             const response = await fetch(FACULTY_MATRIX_UPLOAD, {
@@ -145,6 +175,8 @@ export default function FacultyMatrixUpload() {
                 setSelectedFile(null);
                 setActiveTable(null);
                 setSelectedDepartment(null);
+                setSelectedAcademicYear(null);
+                setSelectedSemesterRun(null);
                 handleClearFile();
             } else {
                 const { message } = await response.json();
@@ -157,9 +189,8 @@ export default function FacultyMatrixUpload() {
         }
     };
 
-    // Wrap your return statement
     if (!isClient) {
-        return null; // or a loading state
+        return null;
     }
 
     return (
@@ -198,7 +229,7 @@ export default function FacultyMatrixUpload() {
                                                 <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-orange-100 focus:outline-none focus:border-orange-500 transition-colors">
                                                     <span className="block truncate font-medium">
                                                         {selectedDepartment?.name ||
-                                                            "Choose a department"}
+                                                            "Choose a Department"}
                                                     </span>
                                                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                                                         <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
@@ -227,6 +258,94 @@ export default function FacultyMatrixUpload() {
                                                                 {
                                                                     department.name
                                                                 }
+                                                            </Listbox.Option>
+                                                        )
+                                                    )}
+                                                </Listbox.Options>
+                                            </div>
+                                        </Listbox>
+                                    </div>
+
+                                    {/* Academic Year Selection */}
+                                    <div>
+                                        <Listbox
+                                            value={selectedAcademicYear}
+                                            onChange={setSelectedAcademicYear}
+                                        >
+                                            <Listbox.Label className="block text-base font-semibold text-gray-700 mb-2">
+                                                Select Academic Year
+                                            </Listbox.Label>
+                                            <div className="relative">
+                                                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-orange-100 focus:outline-none focus:border-orange-500 transition-colors">
+                                                    <span className="block truncate font-medium">
+                                                        {selectedAcademicYear?.yearString || // Use yearString here
+                                                            "Choose Academic Year"}
+                                                    </span>
+                                                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                                                        <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
+                                                    </span>
+                                                </Listbox.Button>
+                                                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                                    {academicYears.map( // Map over fetched academicYears
+                                                        (year) => (
+                                                            <Listbox.Option
+                                                                key={year.id}
+                                                                value={year}
+                                                                className={({
+                                                                    active,
+                                                                }) =>
+                                                                    `relative cursor-pointer select-none py-3 pl-4 pr-4 ${
+                                                                        active
+                                                                            ? "bg-orange-50 text-orange-900"
+                                                                            : "text-gray-900"
+                                                                    }`
+                                                                }
+                                                            >
+                                                                {year.yearString} {/* Display yearString */}
+                                                            </Listbox.Option>
+                                                        )
+                                                    )}
+                                                </Listbox.Options>
+                                            </div>
+                                        </Listbox>
+                                    </div>
+
+                                    {/* Semester Run Selection */}
+                                    <div>
+                                        <Listbox
+                                            value={selectedSemesterRun}
+                                            onChange={setSelectedSemesterRun}
+                                        >
+                                            <Listbox.Label className="block text-base font-semibold text-gray-700 mb-2">
+                                                Select Semester Run
+                                            </Listbox.Label>
+                                            <div className="relative">
+                                                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-3.5 pl-4 pr-10 text-left border-2 border-orange-100 focus:outline-none focus:border-orange-500 transition-colors">
+                                                    <span className="block truncate font-medium">
+                                                        {selectedSemesterRun?.type ||
+                                                            "Choose Semester Run"}
+                                                    </span>
+                                                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                                                        <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
+                                                    </span>
+                                                </Listbox.Button>
+                                                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                                    {SEMESTER_RUNS.map(
+                                                        (run) => (
+                                                            <Listbox.Option
+                                                                key={run.id}
+                                                                value={run}
+                                                                className={({
+                                                                    active,
+                                                                }) =>
+                                                                    `relative cursor-pointer select-none py-3 pl-4 pr-4 ${
+                                                                        active
+                                                                            ? "bg-orange-50 text-orange-900"
+                                                                            : "text-gray-900"
+                                                                    }`
+                                                                }
+                                                            >
+                                                                {run.type}
                                                             </Listbox.Option>
                                                         )
                                                     )}
@@ -295,6 +414,8 @@ export default function FacultyMatrixUpload() {
                                             disabled={
                                                 !selectedFile ||
                                                 !selectedDepartment ||
+                                                !selectedAcademicYear ||
+                                                !selectedSemesterRun ||
                                                 isLoading
                                             }
                                             className="w-full bg-orange-500 text-white py-3 px-6 rounded-xl

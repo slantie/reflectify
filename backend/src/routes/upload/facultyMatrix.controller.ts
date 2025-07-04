@@ -3,6 +3,7 @@ import multer from 'multer';
 import FormData from 'form-data';
 import fetch from 'node-fetch'; // Using node-fetch for HTTP requests
 import prisma from '../../lib/prisma'; // Import the singleton Prisma client
+import { SemesterTypeEnum } from '@prisma/client'; // Import SemesterTypeEnum
 
 // Multer storage configuration for handling file uploads in memory
 export const upload = multer({ storage: multer.memoryStorage() });
@@ -23,7 +24,7 @@ const FLASK_SERVER =
     : process.env.FLASK_PROD_SERVER;
 const COLLEGE_ID = 'LDRP-ITR'; // Hardcoded college ID
 
-// --- Interfaces for data structures ---
+// --- Interfaces for data structures (kept as is) ---
 interface ApiError extends Error {
   status?: number;
   type?: string;
@@ -71,7 +72,23 @@ interface AllocationBatchItem {
   lectureType: 'LECTURE' | 'LAB';
   batch: string;
   academicYearId: string;
+  isDeleted: boolean; // Added isDeleted field
 }
+
+// --- Canonical Department Mapping (re-used from other controllers) ---
+const DEPARTMENT_MAPPING: Record<
+  string,
+  { name: string; abbreviation: string }
+> = {
+  CE: { name: 'Computer Engineering', abbreviation: 'CE' },
+  IT: { name: 'Information Technology', abbreviation: 'IT' },
+  EC: { name: 'Electronics and Communication Engineering', abbreviation: 'EC' },
+  MECH: { name: 'Mechanical Engineering', abbreviation: 'MECH' },
+  CIVIL: { name: 'Civil Engineering', abbreviation: 'CIVIL' },
+  AUTO: { name: 'Automobile Engineering', abbreviation: 'AUTO' },
+  EE: { name: 'Electrical Engineering', abbreviation: 'EE' },
+  // Add any other departments here
+};
 
 // --- Helper Functions ---
 
@@ -123,19 +140,20 @@ const fetchWithRetry = async (
 };
 
 /**
- * Ensures the AcademicYear record exists in the database and caches it.
+ * Finds the AcademicYear record in the database and caches it.
+ * It does NOT create the academic year if it doesn't exist.
  * @param {string} yearString - The academic year string (e.g., "2024-2025").
- * @returns {Promise<any>} The AcademicYear record.
+ * @returns {Promise<any | null>} The AcademicYear record, or null if not found.
  */
-async function ensureAcademicYear(yearString: string) {
+async function findAcademicYear(yearString: string) {
   let academicYear = academicYearCache.get(yearString);
   if (!academicYear) {
-    academicYear = await prisma.academicYear.upsert({
-      where: { yearString: yearString },
-      create: { yearString: yearString },
-      update: {},
+    academicYear = await prisma.academicYear.findFirst({
+      where: { yearString: yearString, isDeleted: false }, // Only consider non-soft-deleted academic years
     });
-    academicYearCache.set(yearString, academicYear);
+    if (academicYear) {
+      academicYearCache.set(yearString, academicYear);
+    }
   }
   return academicYear;
 }
@@ -148,7 +166,7 @@ async function ensureCollege() {
   let college = collegeCache.get(COLLEGE_ID);
   if (!college) {
     college = await prisma.college.upsert({
-      where: { id: COLLEGE_ID },
+      where: { id: COLLEGE_ID, isDeleted: false }, // Filter out soft-deleted colleges
       create: {
         id: COLLEGE_ID,
         name: 'LDRP Institute of Technology and Research',
@@ -157,8 +175,9 @@ async function ensureCollege() {
         contactNumber: '+91-79-23241492',
         logo: 'ldrp-logo.png',
         images: {}, // Assuming images is a JSON field or similar
+        isDeleted: false, // Ensure new college is not soft-deleted
       },
-      update: {},
+      update: {}, // No specific update data needed if it already exists
     });
     collegeCache.set(COLLEGE_ID, college);
   }
@@ -180,26 +199,22 @@ export const uploadFacultyMatrix = async (
 ): Promise<void> => {
   const batchSize = 500; // Number of allocations to process in a single Prisma createMany operation
   let allocationBatch: AllocationBatchItem[] = [];
-
-  // Determine the current academic year string (e.g., "2024-2025")
-  const now = new Date();
-  const currentMonth = now.getMonth(); // 0-indexed (Jan=0, Dec=11)
-  let currentYear = now.getFullYear();
-  if (currentMonth < 7) {
-    // Assuming academic year starts in August (month 7)
-    currentYear = currentYear - 1;
-  }
-  const currentYearString = `${currentYear}-${currentYear + 1}`;
-
   let totalAllocationsAdded = 0; // Counts successfully added allocations (not duplicates)
   let totalRowsSkippedDueToMissingEntities = 0; // Counts rows from Flask output where subject or faculty could not be found
+  const skippedRowsDetails: string[] = []; // Array to store details of skipped rows for frontend
+
+  // --- NEW: Get academicYearString and semesterType from request body ---
+  const academicYearString = req.body.academicYear as string;
+  const semesterRunInput = req.body.semesterRun as string; // e.g., "ODD" or "EVEN"
+  // --- END NEW ---
 
   try {
-    // Validate required inputs
+    // Validate required inputs, including the new fields
     if (!req.file) {
       res.status(400).json({
         success: false,
         message: 'No file uploaded or file processing failed by multer.',
+        skippedRowsDetails: skippedRowsDetails,
       });
       return;
     }
@@ -207,6 +222,23 @@ export const uploadFacultyMatrix = async (
       res.status(400).json({
         success: false,
         message: 'Department abbreviation is required.',
+        skippedRowsDetails: skippedRowsDetails,
+      });
+      return;
+    }
+    if (!academicYearString) {
+      res.status(400).json({
+        success: false,
+        message: 'Academic Year is required.',
+        skippedRowsDetails: skippedRowsDetails,
+      });
+      return;
+    }
+    if (!semesterRunInput) {
+      res.status(400).json({
+        success: false,
+        message: 'Semester Run (Odd/Even) is required.',
+        skippedRowsDetails: skippedRowsDetails,
       });
       return;
     }
@@ -214,17 +246,25 @@ export const uploadFacultyMatrix = async (
       res.status(500).json({
         success: false,
         message: 'Flask server URL is not configured.',
+        skippedRowsDetails: skippedRowsDetails,
       });
       return;
     }
 
-    // Prepare form data to send to Flask server
-    const formData = new FormData();
-    formData.append('facultyMatrix', req.file.buffer, {
-      filename: req.file.originalname,
-      contentType: req.file.mimetype,
-    });
-    formData.append('deptAbbreviation', req.body.deptAbbreviation);
+    // Validate semesterRunInput against SemesterTypeEnum
+    let semesterType: SemesterTypeEnum;
+    if (semesterRunInput.toUpperCase() === SemesterTypeEnum.ODD) {
+      semesterType = SemesterTypeEnum.ODD;
+    } else if (semesterRunInput.toUpperCase() === SemesterTypeEnum.EVEN) {
+      semesterType = SemesterTypeEnum.EVEN;
+    } else {
+      res.status(400).json({
+        success: false,
+        message: `Invalid Semester Run value: '${semesterRunInput}'. Must be 'ODD' or 'EVEN'.`,
+        skippedRowsDetails: skippedRowsDetails,
+      });
+      return;
+    }
 
     // Clear caches at the beginning of the request to ensure fresh data
     collegeCache.clear();
@@ -235,8 +275,87 @@ export const uploadFacultyMatrix = async (
     subjectCache.clear();
     facultyCache.clear();
 
+    // Ensure college record exists
+    const college = await ensureCollege();
+
+    // Find the AcademicYear for the provided academicYearString (crucial pre-check)
+    const academicYear = await findAcademicYear(academicYearString);
+    if (!academicYear) {
+      const message = `Academic Year '${academicYearString}' not found. Please create it first via the Academic Year management API before uploading faculty matrix.`;
+      console.error(message);
+      if (!res.headersSent) {
+        res.status(400).json({
+          success: false,
+          message: message,
+          skippedRowsDetails: skippedRowsDetails,
+        });
+      }
+      return;
+    }
+
+    // Find the department based on the provided abbreviation and college ID
+    let department = departmentCache.get(req.body.deptAbbreviation);
+    if (!department) {
+      let canonicalDept =
+        DEPARTMENT_MAPPING[req.body.deptAbbreviation.toUpperCase()];
+      if (!canonicalDept) {
+        // Fallback to searching by full name if abbreviation not found
+        for (const key in DEPARTMENT_MAPPING) {
+          if (
+            DEPARTMENT_MAPPING[key].name.toLowerCase() ===
+            req.body.deptAbbreviation.toLowerCase()
+          ) {
+            canonicalDept = DEPARTMENT_MAPPING[key];
+            break;
+          }
+        }
+      }
+      const deptNameToSearch = canonicalDept
+        ? canonicalDept.name
+        : req.body.deptAbbreviation;
+
+      department = await prisma.department.findFirst({
+        where: {
+          OR: [
+            { abbreviation: req.body.deptAbbreviation, isDeleted: false },
+            { name: deptNameToSearch, isDeleted: false },
+          ],
+          collegeId: COLLEGE_ID,
+        },
+      });
+
+      if (department) {
+        departmentCache.set(req.body.deptAbbreviation, department);
+      }
+    }
+
+    if (!department) {
+      const message = `Department '${req.body.deptAbbreviation}' not found for College '${COLLEGE_ID}'. Please ensure the department exists and is not soft-deleted.`;
+      console.error(message);
+      if (!res.headersSent) {
+        res.status(400).json({
+          success: false,
+          message: message,
+          skippedRowsDetails: skippedRowsDetails,
+        });
+      }
+      return;
+    }
+
+    // Prepare form data to send to Flask server
+    const formData = new FormData();
+    formData.append('facultyMatrix', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
+    formData.append('deptAbbreviation', req.body.deptAbbreviation);
+    // --- NEW: Pass academicYear and semesterRun to Flask if needed by Flask ---
+    formData.append('academicYear', academicYearString);
+    formData.append('semesterRun', semesterRunInput);
+    // --- END NEW ---
+
     // Send the Excel file to the Flask server for processing
-    const processedData = (await fetchWithRetry(FLASK_SERVER, {
+    const processedData = (await fetchWithRetry(`${FLASK_SERVER}`, {
       method: 'POST',
       headers: {
         ...formData.getHeaders(),
@@ -245,27 +364,7 @@ export const uploadFacultyMatrix = async (
       body: formData,
     })) as ProcessedData;
 
-    // Ensure college and academic year records exist in the database
-    const college = await ensureCollege();
-    const academicYear = await ensureAcademicYear(currentYearString);
-
-    // Find the department based on the provided abbreviation and college ID
-    const department = await prisma.department.findFirst({
-      where: {
-        abbreviation: req.body.deptAbbreviation,
-        collegeId: COLLEGE_ID,
-      },
-    });
-
-    if (!department) {
-      res.status(400).json({
-        success: false,
-        message: `Department '${req.body.deptAbbreviation}' not found for College '${COLLEGE_ID}'`,
-      });
-      return;
-    }
-
-    const startTime = Date.now();
+    const processingStartTime = Date.now(); // Renamed to avoid conflict with outer startTime
 
     // Iterate through the processed data received from the Flask server
     for (const [collegeName, collegeData] of Object.entries(processedData)) {
@@ -273,63 +372,98 @@ export const uploadFacultyMatrix = async (
         for (const [semesterNum, semesterData] of Object.entries(deptData)) {
           const parsedSemesterNum = parseInt(semesterNum);
           if (isNaN(parsedSemesterNum)) {
-            console.warn(
-              `Skipping invalid semester number: ${semesterNum} found in Flask data.`
-            );
+            const message = `Skipping invalid semester number: '${semesterNum}' found in Flask data for department '${deptName}'.`;
+            console.warn(message);
+            skippedRowsDetails.push(message);
+            totalRowsSkippedDueToMissingEntities++;
+            continue;
+          }
+
+          // The semesterType is now determined from the request body, not derived from parsedSemesterNum
+          // However, we still need to ensure the semester number matches the semester type (e.g., 1,3,5,7 for ODD)
+          const expectedSemesterType =
+            parsedSemesterNum % 2 !== 0
+              ? SemesterTypeEnum.ODD
+              : SemesterTypeEnum.EVEN;
+          if (expectedSemesterType !== semesterType) {
+            const message = `Skipping semester data for Semester ${parsedSemesterNum} (expected ${expectedSemesterType}): Mismatch with provided Semester Run '${semesterRunInput}'.`;
+            console.warn(message);
+            skippedRowsDetails.push(message);
             totalRowsSkippedDueToMissingEntities++;
             continue;
           }
 
           // Ensure Semester exists or create it.
-          let semester = await prisma.semester.upsert({
-            where: {
-              departmentId_semesterNumber_academicYearId: {
+          // Use the new unique constraint and soft-delete filter
+          let semester = semesterCache.get(
+            `${department.id}_${parsedSemesterNum}_${academicYear.id}_${semesterType}`
+          );
+          if (!semester) {
+            semester = await prisma.semester.upsert({
+              where: {
+                departmentId_semesterNumber_academicYearId_semesterType: {
+                  departmentId: department.id,
+                  semesterNumber: parsedSemesterNum,
+                  academicYearId: academicYear.id,
+                  semesterType: semesterType,
+                },
+                isDeleted: false, // Filter out soft-deleted semesters
+              },
+              create: {
                 departmentId: department.id,
                 semesterNumber: parsedSemesterNum,
                 academicYearId: academicYear.id,
+                semesterType: semesterType,
+                isDeleted: false, // Ensure new semester is not soft-deleted
               },
-            },
-            create: {
-              departmentId: department.id,
-              semesterNumber: parsedSemesterNum,
-              academicYearId: academicYear.id,
-            },
-            update: {},
-          });
-          semesterCache.set(
-            `${department.id}_${parsedSemesterNum}_${academicYear.id}`,
-            semester
-          );
+              update: {
+                semesterType: semesterType, // Ensure consistency if found
+              },
+            });
+            semesterCache.set(
+              `${department.id}_${parsedSemesterNum}_${academicYear.id}_${semesterType}`,
+              semester
+            );
+          }
 
           for (const [divisionName, divisionData] of Object.entries(
             semesterData
           )) {
             // Ensure Division exists or create it.
-            let division = await prisma.division.upsert({
-              where: {
-                departmentId_divisionName_semesterId: {
-                  departmentId: department.id,
-                  divisionName: divisionName,
-                  semesterId: semester.id,
-                },
-              },
-              create: {
-                departmentId: department.id,
-                semesterId: semester.id,
-                divisionName: divisionName,
-                studentCount: 0, // Default student count
-              },
-              update: {},
-            });
-            divisionCache.set(
-              `${department.id}_${divisionName}_${semester.id}`,
-              division
+            // Add isDeleted filter
+            let division = divisionCache.get(
+              `${department.id}_${divisionName}_${semester.id}`
             );
+            if (!division) {
+              division = await prisma.division.upsert({
+                where: {
+                  departmentId_divisionName_semesterId: {
+                    departmentId: department.id,
+                    divisionName: divisionName,
+                    semesterId: semester.id,
+                  },
+                  isDeleted: false, // Filter out soft-deleted divisions
+                },
+                create: {
+                  departmentId: department.id,
+                  semesterId: semester.id,
+                  divisionName: divisionName,
+                  studentCount: 0, // Default student count
+                  isDeleted: false, // Ensure new division is not soft-deleted
+                },
+                update: {},
+              });
+              divisionCache.set(
+                `${department.id}_${divisionName}_${semester.id}`,
+                division
+              );
+            }
 
             for (const [subjectAbbreviation, subjectData] of Object.entries(
               divisionData
             )) {
               // Fetch Subject by departmentId and abbreviation (from cache or DB)
+              // Add isDeleted filter
               let subject = subjectCache.get(
                 `${department.id}_${subjectAbbreviation}`
               );
@@ -338,6 +472,7 @@ export const uploadFacultyMatrix = async (
                   where: {
                     departmentId: department.id,
                     abbreviation: subjectAbbreviation,
+                    isDeleted: false, // Filter out soft-deleted subjects
                   },
                 });
                 if (subject) {
@@ -349,9 +484,9 @@ export const uploadFacultyMatrix = async (
               }
 
               if (!subject) {
-                console.warn(
-                  `Skipping subject allocation: Subject with abbreviation '${subjectAbbreviation}' not found for department '${department.abbreviation}'.`
-                );
+                const message = `Skipping subject allocation for Dept '${department.abbreviation}', Semester '${parsedSemesterNum}', Division '${divisionName}': Subject with abbreviation '${subjectAbbreviation}' not found or is soft-deleted.`;
+                console.warn(message);
+                skippedRowsDetails.push(message);
                 totalRowsSkippedDueToMissingEntities++;
                 continue; // Skip to next subject if not found
               }
@@ -367,6 +502,7 @@ export const uploadFacultyMatrix = async (
                     where: {
                       departmentId: department.id,
                       abbreviation: facultyAbbr,
+                      isDeleted: false, // Filter out soft-deleted faculty
                     },
                   });
                   if (faculty) {
@@ -387,12 +523,13 @@ export const uploadFacultyMatrix = async (
                     lectureType: 'LECTURE',
                     batch: '-', // Default batch for lectures
                     academicYearId: academicYear.id,
+                    isDeleted: false, // New allocation is not soft-deleted
                   };
                   allocationBatch.push(lectureAllocation);
                 } else {
-                  console.warn(
-                    `Skipping lecture allocation: Faculty with abbreviation '${facultyAbbr}' not found for department '${department.abbreviation}'.`
-                  );
+                  const message = `Skipping lecture allocation for Subject '${subjectAbbreviation}', Division '${divisionName}': Faculty with abbreviation '${facultyAbbr}' not found or is soft-deleted for department '${department.abbreviation}'.`;
+                  console.warn(message);
+                  skippedRowsDetails.push(message);
                   totalRowsSkippedDueToMissingEntities++;
                 }
               }
@@ -411,6 +548,7 @@ export const uploadFacultyMatrix = async (
                       where: {
                         departmentId: department.id,
                         abbreviation: facultyAbbr,
+                        isDeleted: false, // Filter out soft-deleted faculty
                       },
                     });
                     if (faculty) {
@@ -431,12 +569,13 @@ export const uploadFacultyMatrix = async (
                       lectureType: 'LAB',
                       batch: batch,
                       academicYearId: academicYear.id,
+                      isDeleted: false, // New allocation is not soft-deleted
                     };
                     allocationBatch.push(labAllocation);
                   } else {
-                    console.warn(
-                      `Skipping lab allocation for batch '${batch}': Faculty with abbreviation '${facultyAbbr}' not found for department '${department.abbreviation}'.`
-                    );
+                    const message = `Skipping lab allocation for Subject '${subjectAbbreviation}', Division '${divisionName}', Batch '${batch}': Faculty with abbreviation '${facultyAbbr}' not found or is soft-deleted for department '${department.abbreviation}'.`;
+                    console.warn(message);
+                    skippedRowsDetails.push(message);
                     totalRowsSkippedDueToMissingEntities++;
                   }
                 }
@@ -469,21 +608,25 @@ export const uploadFacultyMatrix = async (
     const endTime = Date.now();
     console.log(
       '🕒 Faculty Matrix processing completed in',
-      ((endTime - startTime) / 1000).toFixed(2),
+      ((endTime - processingStartTime) / 1000).toFixed(2), // Use processingStartTime
       'seconds'
     );
 
     res.status(200).json({
-      message: 'Faculty matrix import summary',
+      success: true,
+      message: 'Faculty matrix import complete.',
       rowsAffected: totalAllocationsAdded,
     });
   } catch (error: any) {
     console.error('Processing error for faculty matrix:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to process faculty matrix',
-      error: error.message || 'Unknown error',
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process faculty matrix',
+        error: error.message || 'Unknown error',
+        skippedRowsDetails: skippedRowsDetails, // Include details even on top-level error
+      });
+    }
   } finally {
     // Clear all caches after processing to free up memory
     collegeCache.clear();

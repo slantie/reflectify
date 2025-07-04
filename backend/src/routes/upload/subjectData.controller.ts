@@ -2,11 +2,10 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import ExcelJS from 'exceljs';
 import prisma from '../../lib/prisma'; // Import the singleton Prisma client
-import { SubjectType } from '@prisma/client'; // Import SubjectType enum
+import { SubjectType, SemesterTypeEnum } from '@prisma/client'; // Import SubjectType and SemesterTypeEnum
 
 // Multer configuration for file uploads
 export const upload = multer({
-  // EXPORT THE MULTER INSTANCE
   storage: multer.memoryStorage(), // Store file in memory as a Buffer
   limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
 });
@@ -17,6 +16,23 @@ const collegeCache = new Map();
 const departmentCache = new Map();
 const academicYearCache = new Map();
 const semesterCache = new Map();
+
+// --- Canonical Department Mapping ---
+// This map defines the canonical full name and abbreviation for each department.
+// Keyed by a common identifier (e.g., the abbreviation) for easy lookup.
+const DEPARTMENT_MAPPING: Record<
+  string,
+  { name: string; abbreviation: string }
+> = {
+  CE: { name: 'Computer Engineering', abbreviation: 'CE' },
+  IT: { name: 'Information Technology', abbreviation: 'IT' },
+  EC: { name: 'Electronics and Communication Engineering', abbreviation: 'EC' },
+  MECH: { name: 'Mechanical Engineering', abbreviation: 'MECH' },
+  CIVIL: { name: 'Civil Engineering', abbreviation: 'CIVIL' },
+  AUTO: { name: 'Automobile Engineering', abbreviation: 'AUTO' },
+  EE: { name: 'Electrical Engineering', abbreviation: 'EE' },
+  // Add any other departments here
+};
 
 /**
  * Extracts the string value from an ExcelJS cell, handling rich text and hyperlinks.
@@ -31,7 +47,7 @@ const getCellValue = (cell: ExcelJS.Cell): string => {
     'hyperlink' in value &&
     'text' in value
   ) {
-    return value.text || '';
+    return value.text?.toString() || '';
   }
   return value?.toString() || '';
 };
@@ -45,7 +61,7 @@ async function ensureCollege() {
   let college = collegeCache.get(COLLEGE_ID);
   if (!college) {
     college = await prisma.college.upsert({
-      where: { id: COLLEGE_ID },
+      where: { id: COLLEGE_ID, isDeleted: false }, // Filter out soft-deleted colleges
       create: {
         id: COLLEGE_ID,
         name: 'LDRP Institute of Technology and Research',
@@ -54,8 +70,9 @@ async function ensureCollege() {
         contactNumber: '+91-79-23241492',
         logo: 'ldrp-logo.png',
         images: {},
+        isDeleted: false, // Ensure new college is not soft-deleted
       },
-      update: {},
+      update: {}, // No specific update needed if it exists
     });
     collegeCache.set(COLLEGE_ID, college);
   }
@@ -63,19 +80,20 @@ async function ensureCollege() {
 }
 
 /**
- * Ensures the AcademicYear record exists in the database and caches it.
+ * Finds the AcademicYear record in the database and caches it.
+ * It does NOT create the academic year if it doesn't exist.
  * @param {string} yearString - The academic year string (e.g., "2024-2025").
- * @returns {Promise<any>} The AcademicYear record.
+ * @returns {Promise<any | null>} The AcademicYear record, or null if not found.
  */
-async function ensureAcademicYear(yearString: string) {
+async function findAcademicYear(yearString: string) {
   let academicYear = academicYearCache.get(yearString);
   if (!academicYear) {
-    academicYear = await prisma.academicYear.upsert({
-      where: { yearString: yearString },
-      create: { yearString: yearString },
-      update: {},
+    academicYear = await prisma.academicYear.findFirst({
+      where: { yearString: yearString, isDeleted: false }, // Only consider non-soft-deleted academic years
     });
-    academicYearCache.set(yearString, academicYear);
+    if (academicYear) {
+      academicYearCache.set(yearString, academicYear);
+    }
   }
   return academicYear;
 }
@@ -93,14 +111,20 @@ export const uploadSubjectData = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  // Initialize these variables at the top to ensure they are always available for the final response
+  let addedCount = 0;
+  let updatedCount = 0;
+  let unchangedCount = 0;
+  let skippedCount = 0;
+  const skippedRowsDetails: string[] = []; // Array to store details of skipped rows for frontend
+
   try {
     // Multer middleware should have already processed the file and populated req.file
     if (!req.file) {
-      res
-        .status(400)
-        .json({
-          message: 'No file uploaded or file processing failed by multer.',
-        });
+      res.status(400).json({
+        message: 'No file uploaded or file processing failed by multer.',
+        skippedRowsDetails: skippedRowsDetails,
+      });
       return;
     }
     const workbook = new ExcelJS.Workbook();
@@ -108,18 +132,18 @@ export const uploadSubjectData = async (
     const worksheet = workbook.getWorksheet(1);
 
     if (!worksheet) {
-      res.status(400).json({ message: 'Invalid worksheet' });
+      res.status(400).json({
+        message: 'Invalid worksheet: Worksheet not found in the Excel file.',
+        skippedRowsDetails: skippedRowsDetails,
+      });
       return;
     }
 
     const startTime = Date.now();
 
-    let addedCount = 0;
-    let updatedCount = 0;
-    let unchangedCount = 0;
-    let skippedCount = 0; // For rows that cannot be processed due to missing data
-
     // Determine the current academic year string (e.g., "2024-2025")
+    // This logic assumes subjects are being added for the 'current' academic year based on the server's date.
+    // If subjects can be added for arbitrary academic years, this should come from the Excel file or request body.
     const now = new Date();
     const currentMonth = now.getMonth(); // 0-indexed (Jan=0, Dec=11)
     let currentYear = now.getFullYear();
@@ -131,10 +155,28 @@ export const uploadSubjectData = async (
     const currentYearString = `${currentYear}-${currentYear + 1}`;
 
     // Clear caches at the beginning of the request to ensure fresh data
-    collegeCache.clear(); // Clear college cache, it will be re-populated by ensureCollege
+    collegeCache.clear();
     departmentCache.clear();
     academicYearCache.clear();
     semesterCache.clear();
+
+    // Ensure College exists (cached)
+    const college = await ensureCollege();
+
+    // Find the AcademicYear for the current year string
+    const academicYear = await findAcademicYear(currentYearString);
+    if (!academicYear) {
+      const message = `Academic Year '${currentYearString}' not found. Please create it first via the Academic Year management API before uploading subjects.`;
+      console.error(message);
+      // Since all subjects depend on this, we'll return an error immediately
+      if (!res.headersSent) {
+        res.status(400).json({
+          message: message,
+          skippedRowsDetails: skippedRowsDetails, // Include any previously collected details
+        });
+      }
+      return;
+    }
 
     for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
       const row = worksheet.getRow(rowNumber);
@@ -147,7 +189,7 @@ export const uploadSubjectData = async (
       const semesterNumberStr = getCellValue(row.getCell(5))?.trim() || ''; // Column E
       const isElectiveStr =
         getCellValue(row.getCell(6))?.toUpperCase()?.trim() || ''; // Column F
-      const deptAbbreviation = getCellValue(row.getCell(7))?.trim() || ''; // Column G
+      const deptAbbreviationInput = getCellValue(row.getCell(7))?.trim() || ''; // Column G - Renamed for clarity
 
       // Basic validation: Skip row if essential identifiers are missing
       if (
@@ -155,101 +197,129 @@ export const uploadSubjectData = async (
         !subjectAbbreviation ||
         !subjectCode ||
         !semesterNumberStr ||
-        !deptAbbreviation
+        !deptAbbreviationInput
       ) {
-        console.warn(
-          `Skipping row ${rowNumber}: Missing Subject Name (B), Abbreviation (C), Code (D), Semester (E), or Department (G).`
-        );
+        const message = `Row ${rowNumber}: Skipping due to missing essential data (Subject Name, Abbreviation, Code, Semester, or Department).`;
+        console.warn(message);
+        skippedRowsDetails.push(message);
         skippedCount++;
         continue;
       }
 
       const semesterNumber = parseInt(semesterNumberStr, 10);
       if (isNaN(semesterNumber)) {
-        console.warn(
-          `Skipping row ${rowNumber}: Invalid Semester Number (Col E): '${semesterNumberStr}'. Must be a number.`
-        );
+        const message = `Row ${rowNumber}: Invalid Semester Number (Col E): '${semesterNumberStr}'. Must be a number.`;
+        console.warn(message);
+        skippedRowsDetails.push(message);
         skippedCount++;
         continue;
       }
 
+      // Determine SemesterTypeEnum (ODD/EVEN) based on semester number
+      let semesterType: SemesterTypeEnum;
+      if (semesterNumber % 2 !== 0) {
+        // Odd semesters: 1, 3, 5, 7
+        semesterType = SemesterTypeEnum.ODD;
+      } else {
+        // Even semesters: 2, 4, 6, 8
+        semesterType = SemesterTypeEnum.EVEN;
+      }
+
       try {
-        // Ensure College exists (cached)
-        const college = await ensureCollege();
+        // --- Department Lookup/Upsert Logic (Revised for Consistency and soft-delete) ---
+        let department = departmentCache.get(deptAbbreviationInput); // Try to get from cache using original input string
+        let canonicalDept: { name: string; abbreviation: string } | undefined;
 
-        // Ensure Department exists (cached)
-        let department = departmentCache.get(deptAbbreviation);
         if (!department) {
-          let departmentFullName = deptAbbreviation;
-          // Map common abbreviations to full names if necessary
-          const departmentAbbreviationMap: Record<string, string> = {
-            CE: 'Computer Engineering',
-            IT: 'Information Technology',
-            EC: 'Electronics and Communication Engineering',
-            MECH: 'Mechanical Engineering',
-            CIVIL: 'Civil Engineering',
-            AUTO: 'Automobile Engineering',
-            EE: 'Electrical Engineering',
-          };
+          // Attempt to find canonical department details from our mapping
+          canonicalDept =
+            DEPARTMENT_MAPPING[deptAbbreviationInput.toUpperCase()]; // Use uppercase for map key lookup
 
-          // Try to find by abbreviation first, then by name if abbreviation is full name
-          department = await prisma.department.findFirst({
+          if (!canonicalDept) {
+            // If not found as an abbreviation, check if it's a full name
+            for (const key in DEPARTMENT_MAPPING) {
+              if (
+                DEPARTMENT_MAPPING[key].name.toLowerCase() ===
+                deptAbbreviationInput.toLowerCase()
+              ) {
+                canonicalDept = DEPARTMENT_MAPPING[key];
+                break;
+              }
+            }
+          }
+
+          if (!canonicalDept) {
+            // If still not found in our predefined map, use the input as is, but warn
+            const message = `Row ${rowNumber}: Department '${deptAbbreviationInput}' not found in predefined mapping. Using input as canonical.`;
+            console.warn(message);
+            skippedRowsDetails.push(message); // Add warning to details
+            canonicalDept = {
+              name: deptAbbreviationInput,
+              abbreviation: deptAbbreviationInput,
+            }; // Fallback to using input as both
+          }
+
+          // Now, use the canonical name and abbreviation for database operations
+          department = await prisma.department.upsert({
             where: {
-              OR: [
-                { abbreviation: deptAbbreviation },
-                { name: deptAbbreviation },
-              ],
-              collegeId: college.id,
-            },
-          });
-
-          if (!department) {
-            // If not found, create it
-            department = await prisma.department.create({
-              data: {
-                name:
-                  departmentAbbreviationMap[deptAbbreviation] ||
-                  deptAbbreviation, // Use mapped name or abbreviation itself
-                abbreviation: deptAbbreviation,
-                hodName: `HOD of ${departmentAbbreviationMap[deptAbbreviation] || deptAbbreviation}`, // Placeholder HOD name
-                hodEmail: `hod.${deptAbbreviation.toLowerCase()}@ldrp.ac.in`, // Placeholder HOD email
+              name_collegeId: {
+                // Use the canonical name for the unique constraint
+                name: canonicalDept.name,
                 collegeId: college.id,
               },
-            });
-          }
-          departmentCache.set(deptAbbreviation, department);
+              isDeleted: false, // Only consider non-soft-deleted departments
+            },
+            create: {
+              name: canonicalDept.name,
+              abbreviation: canonicalDept.abbreviation,
+              hodName: `HOD of ${canonicalDept.name}`, // Placeholder HOD name
+              hodEmail: `hod.${canonicalDept.abbreviation.toLowerCase()}@ldrp.ac.in`, // Placeholder HOD email
+              collegeId: college.id,
+              isDeleted: false, // Ensure new department is not soft-deleted
+            },
+            update: {
+              // Ensure existing department's name and abbreviation are updated to canonical form
+              name: canonicalDept.name,
+              abbreviation: canonicalDept.abbreviation,
+            },
+          });
+          departmentCache.set(deptAbbreviationInput, department); // Cache using the original input string for future lookups in this request
         }
 
         if (!department) {
-          console.warn(
-            `Skipping row ${rowNumber}: Department '${deptAbbreviation}' (Column G) could not be created or found.`
-          );
+          const message = `Row ${rowNumber}: Department '${deptAbbreviationInput}' (Col G) could not be created or found after all attempts.`;
+          console.warn(message);
+          skippedRowsDetails.push(message);
           skippedCount++;
           continue;
         }
 
-        // Ensure AcademicYear exists and get its ID (using current year string in YYYY-YYYY format)
-        const academicYear = await ensureAcademicYear(currentYearString);
-
-        // Ensure Semester exists (cached), now using academicYearId in its unique key
-        const semesterKey = `${department.id}_${semesterNumber}_${academicYear.id}`;
+        // Ensure Semester exists (cached), now using academicYearId and semesterType in its unique key
+        const semesterKey = `${department.id}_${semesterNumber}_${academicYear.id}_${semesterType}`;
         let semester = semesterCache.get(semesterKey);
         if (!semester) {
           semester = await prisma.semester.upsert({
             where: {
-              // Updated unique constraint to include academicYearId
-              departmentId_semesterNumber_academicYearId: {
+              // Updated unique constraint to include academicYearId and semesterType
+              departmentId_semesterNumber_academicYearId_semesterType: {
                 departmentId: department.id,
                 semesterNumber: semesterNumber,
                 academicYearId: academicYear.id, // Use academicYear.id
+                semesterType: semesterType, // Include semesterType
               },
+              isDeleted: false, // Only consider non-soft-deleted semesters
             },
             create: {
               departmentId: department.id,
               semesterNumber: semesterNumber,
               academicYearId: academicYear.id, // Use academicYear.id
+              semesterType: semesterType, // Include semesterType
+              isDeleted: false, // Ensure new semester is not soft-deleted
             },
-            update: {}, // No specific update needed if found by unique constraint
+            update: {
+              // No specific update needed if found by unique constraint, but ensure semesterType is consistent
+              semesterType: semesterType,
+            },
           });
           semesterCache.set(semesterKey, semester);
         }
@@ -267,7 +337,7 @@ export const uploadSubjectData = async (
           semesterId: semester.id, // Link to the year-specific semester instance
         };
 
-        // --- Find Existing Subject and Compare ---
+        // --- Find Existing Subject and Compare (with soft-delete filter) ---
         // Subject is unique by departmentId and abbreviation
         const existingSubject = await prisma.subject.findUnique({
           where: {
@@ -275,6 +345,7 @@ export const uploadSubjectData = async (
               departmentId: newSubjectData.departmentId,
               abbreviation: newSubjectData.abbreviation,
             },
+            isDeleted: false, // Only consider non-soft-deleted subjects
           },
           select: {
             // Select all fields that can be updated for comparison
@@ -317,6 +388,7 @@ export const uploadSubjectData = async (
                 subjectCode: newSubjectData.subjectCode,
                 type: newSubjectData.type,
                 semesterId: newSubjectData.semesterId, // Update the semester association
+                isDeleted: false, // Ensure it's not soft-deleted if it was for some reason
               },
             });
             updatedCount++;
@@ -326,15 +398,17 @@ export const uploadSubjectData = async (
         } else {
           // Create new subject
           await prisma.subject.create({
-            data: newSubjectData,
+            data: {
+              ...newSubjectData,
+              isDeleted: false, // Ensure new subject is not soft-deleted
+            },
           });
           addedCount++;
         }
       } catch (innerError: any) {
-        console.error(
-          `Error processing row ${rowNumber} (Subject: ${subjectName}, Dept: ${deptAbbreviation}):`,
-          innerError
-        );
+        const message = `Row ${rowNumber}: Error processing data for Subject '${subjectName}', Dept: '${deptAbbreviationInput}': ${innerError.message || 'Unknown error'}.`;
+        console.error(message, innerError);
+        skippedRowsDetails.push(message);
         skippedCount++;
       }
     }
@@ -345,26 +419,29 @@ export const uploadSubjectData = async (
       ((endTime - startTime) / 1000).toFixed(2),
       'seconds'
     );
-    console.log(
-      `Summary: Added ${addedCount}, Updated ${updatedCount}, Unchanged ${unchangedCount}, Skipped ${skippedCount} rows.`
-    );
 
+    // Send a summary response back to the client.
+    // This is the ONLY place a success response is sent.
     res.status(200).json({
-      message: 'Subject data import summary',
+      message: 'Subject data import complete.',
       rowsAffected: addedCount + updatedCount,
     });
   } catch (error: any) {
+    // Catch any top-level errors (e.g., file upload issues, workbook loading).
     console.error('Error processing subject data:', error);
-    res.status(500).json({
-      message: 'Error processing subject data',
-      error: error.message || 'Unknown error',
-    });
+    // Ensure response is only sent if headers haven't been sent already
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: 'Error processing subject data',
+        error: error.message || 'Unknown error',
+        skippedRowsDetails: skippedRowsDetails, // Include details even on top-level error if any were collected
+      });
+    }
   } finally {
     // Clear caches after request completion
     collegeCache.clear();
     departmentCache.clear();
     academicYearCache.clear();
     semesterCache.clear();
-    // subjectCache is not actively used for pre-fetching, can remain or be removed
   }
 };

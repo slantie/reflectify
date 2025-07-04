@@ -10,7 +10,7 @@
 
 4. Manage data for all the batches from the very start. Persistent system with continuous data addition. -- Done! (Need to make endpoints to fetch data properly the data stats in the database while being persistent)
 
-5. Endpoint to export faculty performance data Format [Faculty Name] [Semester 1] ... [Semester 8] [Overall].
+5. Endpoint to export faculty performance data Format [Faculty Name] [Semester 1] ... [Semester 8] [Overall]. -- Done! (requires refinement!)
 
 6. Lab Scores are not required as a priority, Lecture Scores are the most important ones.
 
@@ -28,6 +28,6 @@
 
 5. Add Batch selection when uploading the Faculty Matrix.
 
-6. Add student's email data upload field for the particular feedback form to target the students. Check if Google Groups can be utilized for the same.
+6. Add student's email data upload field for the particular feedback form to target the students. Check if Google Groups can be utilized for the same. -- Cannot be used since we send a unique link to each student.
 
 7. The design should be end to end responsive.
