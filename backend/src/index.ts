@@ -1,36 +1,51 @@
+// Load environment variables as early as possible
+import dotenv from 'dotenv';
+dotenv.config();
+
+import cors from 'cors';
 import express from 'express';
+
+// --- Route Imports ---
+
+// 1. Authentication Routes
 import authRoutes from './routes/auth/authRoutes';
-import cleanDatabaseRoutes from './routes/cleanDatabase';
 
-// Upload Excel File Route Imports
-import uploadFacultyData from './routes/upload/facultyData';
-import uploadStudentData from './routes/upload/studentData';
-import uploadSubjectData from './routes/upload/subjectData';
+// 2. Upload/Data Management Routes
+// Assuming 'upload/index.ts' consolidates all specific excel uploads (faculty, student, subject)
+import uploadRouter from './routes/upload';
 
-import dashboardRoutes from './routes/dashboard';
-import questionRoutes from './routes/feedback/question.routes';
-import questionCategoryRoutes from './routes/feedback/questionCategoryRoutes';
-import selectionRoutes from './routes/feedback/selectionRoute';
+// 3. Core Academic/Entity Management Routes
+import academicYearRoutes from './routes/routes/academicYear.route';
 import collegeRoutes from './routes/routes/collegeRoutes';
 import departmentRoutes from './routes/routes/departmentRoutes';
 import divisionRoutes from './routes/routes/divisionRoutes';
 import facultyRoutes from './routes/routes/facultyRoutes';
-import feedbackRoutes from './routes/routes/feedbackRoute';
 import semesterRoutes from './routes/routes/semesterRoutes';
 import studentRoutes from './routes/routes/studentRoutes';
-import subjectAllocationRoutes from './routes/routes/subjectAllocationRoutes';
 import subjectRoutes from './routes/routes/subjectRoutes';
-import uploadRouter from './routes/upload';
-import responseRoutes from './routes/feedback/responseRoutes';
-import analyticsRoutes from './routes/analytics/analyticsRoutes';
+import subjectAllocationRoutes from './routes/routes/subjectAllocationRoutes';
 
-// Faculty Anaytics Route Imports
-import facultyAnalyticsRoutes from './routes/analytics/facultyAnalyticsRoutes';
+// 4. Feedback System Routes
+import feedbackRoutes from './routes/routes/feedbackRoute'; // Main feedback form creation/management
+import questionRoutes from './routes/feedback/question.routes'; // Individual question management
+import questionCategoryRoutes from './routes/feedback/questionCategoryRoutes'; // Question categories
+import responseRoutes from './routes/feedback/responseRoutes'; // Student response submission/checking
+import selectionRoutes from './routes/feedback/selectionRoute'; // Likely related to form selection/pre-requisites
 
-import cors from 'cors';
+// 5. Analytics & Dashboard Routes
+import dashboardRoutes from './routes/dashboard'; // General dashboard data
+import analyticsRoutes from './routes/analytics/analyticsRoutes'; // Generic analytics
+import facultyAnalyticsRoutes from './routes/analytics/facultyAnalyticsRoutes'; // Faculty-specific analytics
 
+// 6. Admin/Development Utility Routes (Conditional for Production)
+import cleanDatabaseRoutes from './routes/cleanDatabase';
+
+// --- Initialize Express App ---
 const app = express();
 
+// --- Middleware ---
+
+// CORS Configuration: Allow specific origins, crucial for security in production
 app.use(
   cors({
     origin: [
@@ -38,64 +53,96 @@ app.use(
       process.env.FRONTEND_PROD_URL!,
       process.env.FLASK_DEV_SERVER!,
       process.env.FLASK_PROD_SERVER!,
+      // Add any other specific origins if needed, e.g., for mobile apps
     ],
-    credentials: true,
+    credentials: true, // Allow cookies and authorization headers to be sent
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Explicitly allowed HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'], // Explicitly allowed headers
   })
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body Parsers: For parsing JSON and URL-encoded data from incoming requests
+app.use(express.json({ limit: '10mb' })); // Increased limit for potentially large JSON payloads (e.g., large excel data)
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Clean Database
-// Only enable in development/staging environments
+// --- Route Mounting ---
+
+// 1. Admin/Development Utility Routes (Conditional)
+// Only enable in non-production environments for safety
 if (process.env.NODE_ENV !== 'production') {
+  console.warn('⚠️ Development Route: /api/clean-database is enabled.');
   app.use('/api/clean-database', cleanDatabaseRoutes);
 }
 
-// Routes
+// 2. Authentication Routes
 app.use('/api/auth', authRoutes);
+
+// 3. Upload/Data Management Routes
+// All specific excel upload routes (faculty-data, student-data, subject-data)
+// should be handled by the 'uploadRouter' internally (e.g., in routes/upload/index.ts)
 app.use('/api/upload', uploadRouter);
-app.use('/api/dashboard', dashboardRoutes);
 
-// Upload Excel File Routes
-app.use('/api/upload/faculty-data', uploadFacultyData);
-app.use('/api/upload/student-data', uploadStudentData);
-app.use('/api/upload/subject-data', uploadSubjectData);
-
-// Academic Routes
-app.use('/api/faculty', facultyRoutes);
-app.use('/api/student', studentRoutes);
-app.use('/api/semester', semesterRoutes);
-app.use('/api/divisions', divisionRoutes);
+// 4. Core Academic/Entity Management Routes
+app.use('/api/academic-years', academicYearRoutes);
 app.use('/api/colleges', collegeRoutes);
 app.use('/api/departments', departmentRoutes);
+app.use('/api/divisions', divisionRoutes);
+app.use('/api/faculty', facultyRoutes);
+app.use('/api/semester', semesterRoutes);
+app.use('/api/student', studentRoutes);
 app.use('/api/subject', subjectRoutes);
 app.use('/api/subject-allocation', subjectAllocationRoutes);
-app.use('/api/selection', selectionRoutes);
-app.use('/api/questions', questionRoutes);
-app.use('/api/response', responseRoutes);
-app.use('/api/analytics', analyticsRoutes);
 
-// Feedback Routes
+// 5. Feedback System Routes
 app.use('/api/feedback', feedbackRoutes);
-
-// Question Bank Routes
+app.use('/api/questions', questionRoutes); // For managing individual questions (CRUD)
 app.use('/api/question-categories', questionCategoryRoutes);
+app.use('/api/response', responseRoutes); // For submitting and checking responses
+app.use('/api/selection', selectionRoutes); // For student/form selection process
 
-// Faculty Analytics Routes
+// 6. Analytics & Dashboard Routes
+app.use('/api/dashboard', dashboardRoutes);
+// Mount general analytics once
+app.use('/api/analytics', analyticsRoutes);
 app.use('/api/faculty-analytics', facultyAnalyticsRoutes);
 
-// General Analytics Routes
-app.use('/api/analytics', analyticsRoutes);
-
+// --- Root Route ---
 app.get('/', (req, res) => {
   res.send('Reflectify Backend APIs Running.');
 });
 
-// Start the server
+// --- Error Handling Middleware ---
+// This should be the last middleware mounted.
+// It catches any errors thrown by previous middleware or route handlers.
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error('Unhandled API Error:', err.stack); // Log the stack trace for debugging
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+      success: false,
+      message: err.message || 'An unexpected error occurred.',
+      // In production, avoid sending detailed error stack traces
+      ...(process.env.NODE_ENV === 'development' && {
+        details: err.message,
+        stack: err.stack,
+      }),
+    });
+  }
+);
+
+// --- Start the Server ---
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(
+    `CORS Origins: ${process.env.FRONTEND_DEV_URL}, ${process.env.FRONTEND_PROD_URL}, etc.`
+  );
 });
 
-export default app;
+export default app; // Export app for testing purposes

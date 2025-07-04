@@ -68,6 +68,10 @@ async def faculty_matrix(
             college="LDRP-ITR"
         )
 
+        if not results:
+            print("❌ No results found in the processed matrix")
+            return JSONResponse(status_code=404, content={"error": "No results found in the processed matrix"})
+
         return JSONResponse(content=results)
 
     except Exception as e:
