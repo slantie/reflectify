@@ -15,7 +15,7 @@ import {
 import {
     FACULTY_MATRIX_DEPARTMENTS,
     FACULTY_MATRIX_UPLOAD,
-    API_ACADEMIC_YEARS, // New API endpoint constant
+    API_ACADEMIC_YEARS,
 } from "@/lib/apiEndPoints";
 
 interface Department {
@@ -36,13 +36,13 @@ interface AcademicYear {
 
 interface SemesterRun {
     id: string;
-    type: "Odd" | "Even";
+    type: "ODD" | "EVEN";
 }
 
 // Dummy data for Semester Run (Academic Years will be fetched)
 const SEMESTER_RUNS: SemesterRun[] = [
-    { id: "odd", type: "Odd" },
-    { id: "even", type: "Even" },
+    { id: "odd", type: "ODD" },
+    { id: "even", type: "EVEN" },
 ];
 
 export default function FacultyMatrixUpload() {
@@ -60,40 +60,78 @@ export default function FacultyMatrixUpload() {
     const [activeTable, setActiveTable] = useState<TableRow[] | null>(null);
     const [isClient, setIsClient] = useState(false);
 
+    // Helper function to get auth headers
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("Authentication token not found. Please log in.");
+            router.push("/login"); // Redirect to login page
+            return null;
+        }
+        return {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json", // For JSON bodies
+        };
+    };
+
     const fetchDepartments = async () => {
+        const headers = getAuthHeaders();
+        if (!headers) return;
+
         try {
-            const response = await fetch(FACULTY_MATRIX_DEPARTMENTS);
+            const response = await fetch(FACULTY_MATRIX_DEPARTMENTS, {
+                headers,
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                    errorData.message ||
+                        `HTTP error! status: ${response.status}`
+                );
+            }
+            // --- FIX START ---
+            // Assuming the backend response for departments is consistent with academic years,
+            // and returns an object like { status: "success", data: { departments: [...] } }
             const { data } = await response.json();
-            setDepartments(data || []);
-        } catch {
-            toast.error("Failed to load departments");
+            setDepartments(data.departments || []); // Correctly access the 'departments' array inside 'data'
+            // --- FIX END ---
+        } catch (error: any) {
+            console.error("Error fetching departments:", error);
+            toast.error(error.message || "Failed to load departments");
             setDepartments([]);
         }
     };
 
     // New function to fetch academic years
     const fetchAcademicYears = async () => {
+        const headers = getAuthHeaders();
+        if (!headers) return;
+
         try {
-            const response = await fetch(API_ACADEMIC_YEARS);
+            const response = await fetch(API_ACADEMIC_YEARS, { headers });
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(
+                    errorData.message ||
+                        `HTTP error! status: ${response.status}`
+                );
             }
-            const { academicYears: fetchedYears } = await response.json(); // Destructure academicYears from response
-            setAcademicYears(fetchedYears || []);
-        } catch (error) {
+            const { data } = await response.json(); // Assuming response has a 'data' field containing academicYears
+            setAcademicYears(data.academicYears || []); // Accessing data.academicYears
+        } catch (error: any) {
             console.error("Error fetching academic years:", error);
-            toast.error("Failed to load academic years");
+            toast.error(error.message || "Failed to load academic years");
             setAcademicYears([]);
         }
     };
 
     useEffect(() => {
-        fetchDepartments();
-        fetchAcademicYears(); // Call the new fetch function
-    }, []);
-
-    useEffect(() => {
         setIsClient(true);
+        // Only fetch data if on client side
+        if (typeof window !== "undefined") {
+            fetchDepartments();
+            fetchAcademicYears();
+        }
     }, []);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,10 +203,26 @@ export default function FacultyMatrixUpload() {
         formData.append("academicYear", selectedAcademicYear.yearString); // Use yearString from the fetched object
         formData.append("semesterRun", selectedSemesterRun.type);
 
+        // --- Start of FIX: Add Authorization header to upload request ---
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("Authentication token not found. Please log in.");
+            router.push("/login");
+            setIsLoading(false);
+            return;
+        }
+
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            // Do NOT set 'Content-Type' for FormData, fetch handles it automatically
+        };
+        // --- End of FIX ---
+
         try {
             const response = await fetch(FACULTY_MATRIX_UPLOAD, {
                 method: "POST",
                 body: formData,
+                headers: headers, // Pass the headers here
             });
 
             if (response.ok) {

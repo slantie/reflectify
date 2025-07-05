@@ -1,23 +1,26 @@
-// src/utils/asyncHandler.ts
+/**
+ * @file src/utils/asyncHandler.ts
+ * @description Utility function to wrap asynchronous Express route handlers.
+ * This catches any errors and passes them to the next middleware (error handling middleware).
+ */
+
 import { Request, Response, NextFunction } from 'express';
 
-// This type ensures the wrapped function is an async Express RequestHandler
-type AsyncRequestHandler = (
+// Define a type for an asynchronous Express route handler
+type AsyncFunction = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => Promise<any>;
 
 /**
- * A wrapper for async Express route handlers to catch errors and pass them to the next middleware.
- * This avoids repetitive try-catch blocks in every async controller.
- *
- * @param fn The async function (controller) to wrap.
- * @returns An Express RequestHandler.
+ * Wraps an asynchronous Express route handler to catch errors.
+ * If an error occurs, it's passed to the next middleware in the chain.
+ * @param fn The asynchronous function (controller method) to wrap.
+ * @returns An Express RequestHandler that handles promises.
  */
 const asyncHandler =
-  (fn: AsyncRequestHandler) =>
-  (req: Request, res: Response, next: NextFunction) => {
+  (fn: AsyncFunction) => (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 

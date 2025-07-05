@@ -30,6 +30,7 @@ enum FormStatus {
 }
 
 enum Designation {
+    SUPER_ADMIN
     HOD
     AsstProf
     LabAsst
@@ -244,15 +245,15 @@ model Student {
 }
 
 model Admin {
-    id          String   @id @default(uuid())
+    id          String      @id @default(uuid())
     name        String
-    designation String
-    email       String   @unique
+    designation Designation
+    email       String      @unique
     password    String
-    isSuper     Boolean  @default(false) @map("is_super")
-    isDeleted   Boolean  @default(false) @map("is_deleted") // NEW: isDeleted
-    createdAt   DateTime @default(now()) @map("created_at")
-    updatedAt   DateTime @updatedAt @map("updated_at")
+    isSuper     Boolean     @default(false) @map("is_super")
+    isDeleted   Boolean     @default(false) @map("is_deleted") // NEW: isDeleted
+    createdAt   DateTime    @default(now()) @map("created_at")
+    updatedAt   DateTime    @updatedAt @map("updated_at")
 
     @@map("admins")
 }

@@ -2,10 +2,9 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/index.ts",
+      "src": "src/server.ts",
       "use": "@vercel/node",
       "config": {
-        "prebuild": "prisma generate",
         "installCommand": "npm install"
       }
     }
@@ -13,7 +12,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "src/index.ts"
+      "dest": "dist/server.js"
     }
   ]
 }

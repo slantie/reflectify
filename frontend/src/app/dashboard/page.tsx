@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/Card";
-import { DASHBOARD_STATS, GET_TOTAL_RESPONSES } from "@/lib/apiEndPoints";
+import { DASHBOARD_STATS } from "@/lib/apiEndPoints";
 import {
     AcademicCapIcon,
     // BoltIcon,
@@ -19,15 +19,16 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import CountUp from "react-countup";
+import { toast } from "react-hot-toast";
 
 interface DashboardStats {
+    responseCount: number;
     facultyCount: number;
     subjectCount: number;
     studentCount: number;
     departmentCount: number;
     divisionCount: number;
     semesterCount: number;
-    totalResponses: number;
 }
 
 interface StatCardProps {
@@ -75,37 +76,63 @@ export default function Dashboard() {
     const [currentDate, setCurrentDate] = useState("");
 
     useEffect(() => {
-        fetch(DASHBOARD_STATS)
-            .then((res) => res.json())
-            .then(setStats);
+        const fetchDashboardData = async () => {
+            // Retrieve the token from localStorage
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                toast.error(
+                    "Authentication token not found. Please log in to view dashboard."
+                );
+                router.push("/login"); // Redirect to login page if no token
+                setStats(null);
+                return;
+            }
+
+            const headers = {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json", // Assuming JSON content for these GET requests
+            };
+
+            try {
+                // Fetch dashboard statistics
+                const dashboardStatsResponse = await fetch(DASHBOARD_STATS, {
+                    headers,
+                });
+                const dashboardStatsData = await dashboardStatsResponse.json();
+                console.log("Dashboard Stats Data:", dashboardStatsData);
+
+                if (
+                    !dashboardStatsResponse.ok ||
+                    dashboardStatsData.status === "error"
+                ) {
+                    throw new Error(
+                        dashboardStatsData.message ||
+                            "Failed to fetch dashboard stats."
+                    );
+                }
+
+                setStats({
+                    ...dashboardStatsData.data,
+                });
+            } catch (error: any) {
+                console.error("Error fetching dashboard data:", error);
+                toast.error(error.message || "Failed to load dashboard data.");
+                setStats(null);
+            }
+        };
+
+        fetchDashboardData();
 
         setCurrentDate(
             new Date().toLocaleDateString("en-US", {
+                // Corrected toLocaleDateString typo
                 month: "long",
                 day: "numeric",
                 year: "numeric",
             })
         );
-    }, []);
-    useEffect(() => {
-        Promise.all([
-            fetch(DASHBOARD_STATS).then((res) => res.json()),
-            fetch(GET_TOTAL_RESPONSES).then((res) => res.json()),
-        ]).then(([dashboardStats, responsesData]) => {
-            setStats({
-                ...dashboardStats,
-                totalResponses: responsesData.data.totalUniqueResponses,
-            });
-        });
-
-        setCurrentDate(
-            new Date().toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-            })
-        );
-    }, []);
+    }, [router]);
 
     return (
         <div className="min-h-screen bg-secondary-lighter">
@@ -133,7 +160,7 @@ export default function Dashboard() {
                                             <span className="font-medium text-primary-dark">
                                                 <CountUp
                                                     end={
-                                                        stats?.totalResponses ||
+                                                        stats?.responseCount ||
                                                         0
                                                     }
                                                     duration={2}

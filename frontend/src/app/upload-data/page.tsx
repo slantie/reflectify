@@ -44,11 +44,6 @@ const FILE_ROUTES = {
     },
 } as const;
 
-interface AffectedRows {
-    added: number;
-    updated: number;
-}
-
 export default function UploadPage() {
     const router = useRouter();
     const [isClient, setIsClient] = useState(false);
@@ -140,7 +135,23 @@ export default function UploadPage() {
         }
 
         setLoadingStates((prev) => ({ ...prev, [fileKey]: true }));
-        formData.append(fileKey, file);
+        // --- FIX START ---
+        // Change formData.append(fileKey, file) to formData.append('file', file)
+        // because the backend Multer middleware expects the field name 'file'.
+        formData.append("file", file);
+        // --- FIX END ---
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            toast.error("Authentication token not found. Please log in again.");
+            setLoadingStates((prev) => ({ ...prev, [fileKey]: false }));
+            return;
+        }
+
+        const headers = {
+            Authorization: `Bearer ${token}`,
+        };
 
         try {
             const response = await fetch(
@@ -148,11 +159,17 @@ export default function UploadPage() {
                 {
                     method: "POST",
                     body: formData,
+                    headers: headers,
                 }
             );
 
-            const data: { message: string; rowsAffected: AffectedRows } =
-                await response.json();
+            // Your frontend code snippet:
+            const data: {
+                message: string;
+                rowsAffected: number;
+                status?: string;
+                error?: string | { [key: string]: any };
+            } = await response.json();
 
             if (response.ok) {
                 toast.success(
@@ -163,7 +180,12 @@ export default function UploadPage() {
                 setFiles((prev) => ({ ...prev, [fileKey]: null }));
                 handleClearFile(fileKey);
             } else {
-                toast.error(data.message);
+                const errorMessage =
+                    data.message ||
+                    (data.error && typeof data.error === "string"
+                        ? data.error
+                        : "Unknown error occurred on server.");
+                toast.error(errorMessage);
             }
         } catch (error: unknown) {
             const errorMessage =
