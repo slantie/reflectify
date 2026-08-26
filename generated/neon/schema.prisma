@@ -1,0 +1,565 @@
+// Phase 2 target schema. The legacy schema remains at prisma/schema.prisma
+// until the Neon cutover has completed and the importer has been verified.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/neon"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AcademicYear {
+  id                 String              @id @default(uuid())
+  yearString         String              @unique @map("year_string")
+  isActive           Boolean             @default(false) @map("is_active")
+  isDeleted          Boolean             @default(false) @map("is_deleted")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  semesters          Semester[]
+  students           Student[]
+  subjectAllocations SubjectAllocation[]
+  feedbackAnalytics  FeedbackAnalytics[]
+
+  @@index([isActive, isDeleted])
+  @@map("academic_years")
+}
+
+model OTP {
+  id        String     @id @default(uuid())
+  email     String
+  otpHash   String     @map("otp_hash")
+  purpose   OtpPurpose @default(AUTH)
+  expiresAt DateTime   @map("expires_at")
+  isDeleted Boolean    @default(false) @map("is_deleted")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@index([email, purpose, expiresAt])
+  @@map("otps")
+}
+
+model College {
+  id            String       @id @default(uuid())
+  name          String       @unique
+  websiteUrl    String       @map("website_url")
+  address       String
+  contactNumber String       @map("contact_number")
+  isDeleted     Boolean      @default(false) @map("is_deleted")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  departments   Department[]
+
+  @@map("colleges")
+}
+
+model Department {
+  id                 String              @id @default(uuid())
+  name               String
+  abbreviation       String
+  hodName            String              @map("hod_name")
+  hodEmail           String              @map("hod_email")
+  collegeId          String              @map("college_id")
+  isDeleted          Boolean             @default(false) @map("is_deleted")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  college            College             @relation(fields: [collegeId], references: [id], onDelete: Restrict)
+  semesters          Semester[]
+  faculties          Faculty[]
+  subjects           Subject[]
+  students           Student[]
+  divisions          Division[]
+  subjectAllocations SubjectAllocation[]
+
+  @@unique([collegeId, name])
+  @@unique([collegeId, abbreviation])
+  @@index([collegeId, isDeleted])
+  @@map("departments")
+}
+
+model Semester {
+  id                   String              @id @default(uuid())
+  departmentId         String              @map("department_id")
+  semesterNumber       Int                 @map("semester_number")
+  academicYearId       String              @map("academic_year_id")
+  startDate            DateTime?           @map("start_date")
+  endDate              DateTime?           @map("end_date")
+  semesterType         SemesterTypeEnum    @map("semester_type")
+  isDeleted            Boolean             @default(false) @map("is_deleted")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  department           Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  academicYear         AcademicYear        @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  divisions            Division[]
+  subjects             Subject[]
+  students             Student[]
+  allocations          SubjectAllocation[]
+  promotedFromStudents PromotionHistory[]  @relation("FromSemester")
+  promotedToStudents   PromotionHistory[]  @relation("ToSemester")
+
+  @@unique([departmentId, semesterNumber, academicYearId, semesterType])
+  @@index([academicYearId, departmentId, semesterNumber])
+  @@map("semesters")
+}
+
+model Division {
+  id                 String              @id @default(uuid())
+  departmentId       String              @map("department_id")
+  semesterId         String              @map("semester_id")
+  divisionName       String              @map("division_name")
+  studentCount       Int                 @map("student_count")
+  isDeleted          Boolean             @default(false) @map("is_deleted")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  department         Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  semester           Semester            @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  students           Student[]
+  subjectAllocations SubjectAllocation[]
+  feedbackForms      FeedbackForm[]
+  timetable          DivisionTimetable?
+
+  @@unique([departmentId, semesterId, divisionName])
+  @@index([semesterId, isDeleted])
+  @@map("divisions")
+}
+
+model Subject {
+  id           String              @id @default(uuid())
+  departmentId String              @map("department_id")
+  semesterId   String              @map("semester_id")
+  name         String
+  abbreviation String
+  subjectCode  String              @map("subject_code")
+  type         SubjectType         @default(MANDATORY)
+  isDeleted    Boolean             @default(false) @map("is_deleted")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  department   Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  semester     Semester            @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  allocations  SubjectAllocation[]
+  questions    FeedbackQuestion[]
+
+  @@unique([semesterId, abbreviation])
+  @@unique([semesterId, subjectCode])
+  @@index([departmentId, semesterId, isDeleted])
+  @@map("subjects")
+}
+
+model Faculty {
+  id              String              @id @default(uuid())
+  name            String
+  abbreviation    String?
+  email           String              @unique
+  designation     Designation
+  seatingLocation String              @map("seating_location")
+  image           String?
+  joiningDate     DateTime?           @map("joining_date")
+  departmentId    String              @map("department_id")
+  isDeleted       Boolean             @default(false) @map("is_deleted")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  department      Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  allocations     SubjectAllocation[]
+  questions       FeedbackQuestion[]
+
+  @@index([departmentId, isDeleted])
+  @@map("faculties")
+}
+
+model Student {
+  id               String             @id @default(uuid())
+  name             String
+  intakeYear       String?            @map("intake_year")
+  enrollmentNumber String             @unique @map("enrollment_number")
+  departmentId     String             @map("department_id")
+  semesterId       String             @map("semester_id")
+  divisionId       String             @map("division_id")
+  academicYearId   String             @map("academic_year_id")
+  batch            String
+  email            String             @unique
+  image            String?
+  phoneNumber      String             @map("phone_number")
+  isDeleted        Boolean            @default(false) @map("is_deleted")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  department       Department         @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  semester         Semester           @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  division         Division           @relation(fields: [divisionId], references: [id], onDelete: Restrict)
+  academicYear     AcademicYear       @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  promotionHistory PromotionHistory[]
+  formAccess       FormAccess[]
+  overrideStudents OverrideStudent[]
+
+  @@index([divisionId, isDeleted])
+  @@index([academicYearId, semesterId, divisionId, isDeleted])
+  @@map("students")
+}
+
+model OverrideStudent {
+  id                     String               @id @default(uuid())
+  feedbackFormOverrideId String               @map("feedback_form_override_id")
+  name                   String
+  email                  String
+  enrollmentNumber       String?              @map("enrollment_number")
+  batch                  String?
+  phoneNumber            String?
+  department             String?
+  semester               String?
+  studentId              String?              @map("student_id")
+  isDeleted              Boolean              @default(false) @map("is_deleted")
+  feedbackFormOverride   FeedbackFormOverride @relation(fields: [feedbackFormOverrideId], references: [id], onDelete: Cascade)
+  student                Student?             @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  formAccess             FormAccess[]
+
+  @@unique([feedbackFormOverrideId, email])
+  @@index([studentId])
+  @@map("override_students")
+}
+
+model Admin {
+  id          String      @id @default(uuid())
+  name        String
+  designation Designation
+  email       String      @unique
+  password    String
+  isSuper     Boolean     @default(false) @map("is_super")
+  isDeleted   Boolean     @default(false) @map("is_deleted")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("admins")
+}
+
+model SubjectAllocation {
+  id             String              @id @default(uuid())
+  departmentId   String              @map("department_id")
+  facultyId      String              @map("faculty_id")
+  subjectId      String              @map("subject_id")
+  divisionId     String              @map("division_id")
+  semesterId     String              @map("semester_id")
+  lectureType    LectureType
+  batch          String              @default("-")
+  academicYearId String              @map("academic_year_id")
+  isDeleted      Boolean             @default(false) @map("is_deleted")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  department     Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  faculty        Faculty             @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  subject        Subject             @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  division       Division            @relation(fields: [divisionId], references: [id], onDelete: Restrict)
+  semester       Semester            @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  academicYear   AcademicYear        @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  feedbackForms  FeedbackForm[]
+  analytics      FeedbackAnalytics[]
+
+  @@unique([facultyId, subjectId, divisionId, semesterId, lectureType, batch, academicYearId])
+  @@index([academicYearId, semesterId, divisionId, isDeleted])
+  @@index([facultyId, academicYearId, isDeleted])
+  @@index([subjectId, academicYearId, isDeleted])
+  @@map("subject_allocations")
+}
+
+model FeedbackForm {
+  id                  String                 @id @default(uuid())
+  divisionId          String                 @map("division_id")
+  subjectAllocationId String                 @map("subject_allocation_id")
+  title               String
+  description         String?
+  startDate           DateTime               @map("start_date")
+  endDate             DateTime               @map("end_date")
+  activatedAt         DateTime?              @map("activated_at")
+  isExpired           Boolean                @default(false) @map("is_expired")
+  status              FormStatus             @default(DRAFT)
+  accessHash          String                 @unique @map("access_hash")
+  isDeleted           Boolean                @default(false) @map("is_deleted")
+  createdAt           DateTime               @default(now()) @map("created_at")
+  updatedAt           DateTime               @updatedAt @map("updated_at")
+  division            Division               @relation(fields: [divisionId], references: [id], onDelete: Restrict)
+  subjectAllocation   SubjectAllocation      @relation(fields: [subjectAllocationId], references: [id], onDelete: Restrict)
+  questions           FeedbackQuestion[]
+  formAccess          FormAccess[]
+  overrides           FeedbackFormOverride[]
+
+  @@index([status, isDeleted, startDate, endDate])
+  @@index([activatedAt, isDeleted])
+  @@index([divisionId, subjectAllocationId, isDeleted])
+  @@map("feedback_forms")
+}
+
+model FeedbackFormOverride {
+  id               String            @id @default(uuid())
+  feedbackFormId   String            @map("feedback_form_id")
+  uploadedAt       DateTime          @default(now()) @map("uploaded_at")
+  uploadedBy       String            @map("uploaded_by")
+  isDeleted        Boolean           @default(false) @map("is_deleted")
+  feedbackForm     FeedbackForm      @relation(fields: [feedbackFormId], references: [id], onDelete: Cascade)
+  overrideStudents OverrideStudent[]
+
+  @@index([feedbackFormId, isDeleted])
+  @@map("feedback_form_overrides")
+}
+
+model FormAccess {
+  id                String              @id @default(uuid())
+  formId            String              @map("form_id")
+  studentId         String?             @map("student_id")
+  overrideStudentId String?             @map("override_student_id")
+  accessToken       String              @unique @map("access_token")
+  isSubmitted       Boolean             @default(false) @map("is_submitted")
+  isDeleted         Boolean             @default(false) @map("is_deleted")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  form              FeedbackForm        @relation(fields: [formId], references: [id], onDelete: Cascade)
+  student           Student?            @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  overrideStudent   OverrideStudent?    @relation(fields: [overrideStudentId], references: [id], onDelete: Restrict)
+  submission        FeedbackSubmission?
+
+  @@unique([formId, studentId], name: "form_student_unique")
+  @@unique([formId, overrideStudentId], name: "form_override_student_unique")
+  @@index([formId, isSubmitted, isDeleted])
+  @@map("form_access")
+}
+
+model QuestionCategory {
+  id           String             @id @default(uuid())
+  categoryName String             @map("category_name")
+  description  String
+  isDeleted    Boolean            @default(false) @map("is_deleted")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+  questions    FeedbackQuestion[]
+
+  @@index([categoryName, isDeleted])
+  @@map("question_categories")
+}
+
+model FeedbackQuestion {
+  id           String           @id @default(uuid())
+  formId       String           @map("form_id")
+  categoryId   String           @map("category_id")
+  facultyId    String           @map("faculty_id")
+  subjectId    String           @map("subject_id")
+  batch        String           @default("None")
+  text         String
+  type         String
+  isRequired   Boolean          @default(true) @map("is_required")
+  displayOrder Int              @map("display_order")
+  isDeleted    Boolean          @default(false) @map("is_deleted")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  form         FeedbackForm     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  category     QuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  faculty      Faculty          @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  subject      Subject          @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  answers      FeedbackAnswer[]
+
+  @@unique([formId, displayOrder])
+  @@index([formId, isDeleted, displayOrder])
+  @@map("feedback_questions")
+}
+
+model FeedbackSubmission {
+  id           String           @id @default(uuid())
+  formAccessId String           @unique @map("form_access_id")
+  submittedAt  DateTime         @default(now()) @map("submitted_at")
+  isDeleted    Boolean          @default(false) @map("is_deleted")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  formAccess   FormAccess       @relation(fields: [formAccessId], references: [id], onDelete: Restrict)
+  answers      FeedbackAnswer[]
+
+  @@index([submittedAt])
+  @@map("feedback_submissions")
+}
+
+model FeedbackAnswer {
+  id             String             @id @default(uuid())
+  submissionId   String             @map("submission_id")
+  questionId     String             @map("question_id")
+  responseValue  Json               @map("response_value")
+  numericRating  Decimal?           @map("numeric_rating") @db.Decimal(4, 2)
+  isDeleted      Boolean            @default(false) @map("is_deleted")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  submission     FeedbackSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  question       FeedbackQuestion   @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  analyticsFacts FeedbackSnapshot[]
+
+  @@unique([submissionId, questionId])
+  @@index([questionId, numericRating])
+  @@index([isDeleted, questionId, numericRating])
+  @@map("feedback_answers")
+}
+
+// This remains deliberately denormalized: it is an immutable historical fact
+// record. The normalized source of truth is FeedbackSubmission/FeedbackAnswer.
+model FeedbackSnapshot {
+  id                      String          @id @default(uuid())
+  answerId                String?         @map("original_student_response_id")
+  academicYearId          String          @map("academic_year_id")
+  academicYearString      String          @map("academic_year_string")
+  academicYearIsDeleted   Boolean         @default(false) @map("academic_year_is_deleted")
+  departmentId            String          @map("department_id")
+  departmentName          String          @map("department_name")
+  departmentAbbreviation  String          @map("department_abbreviation")
+  departmentIsDeleted     Boolean         @default(false) @map("department_is_deleted")
+  semesterId              String          @map("semester_id")
+  semesterNumber          Int             @map("semester_number")
+  semesterIsDeleted       Boolean         @default(false) @map("semester_is_deleted")
+  divisionId              String          @map("division_id")
+  divisionName            String          @map("division_name")
+  divisionIsDeleted       Boolean         @default(false) @map("division_is_deleted")
+  subjectId               String          @map("subject_id")
+  subjectName             String          @map("subject_name")
+  subjectAbbreviation     String          @map("subject_abbreviation")
+  subjectCode             String          @map("subject_code")
+  subjectIsDeleted        Boolean         @default(false) @map("subject_is_deleted")
+  facultyId               String          @map("faculty_id")
+  facultyName             String          @map("faculty_name")
+  facultyAbbreviation     String          @map("faculty_abbreviation")
+  facultyEmail            String          @map("faculty_email")
+  studentId               String?         @map("student_id")
+  studentEnrollmentNumber String          @map("student_enrollment_number")
+  studentName             String          @map("student_name")
+  studentEmail            String          @map("student_email")
+  overrideStudentId       String?         @map("override_student_id")
+  isOverrideStudent       Boolean         @default(false) @map("is_override_student")
+  formId                  String          @map("form_id")
+  formName                String          @map("form_name")
+  formStatus              String          @map("form_status")
+  formIsDeleted           Boolean         @default(false) @map("form_is_deleted")
+  questionId              String          @map("question_id")
+  questionText            String          @map("question_text")
+  questionType            String          @map("question_type")
+  questionCategoryId      String          @map("question_category_id")
+  questionCategoryName    String          @map("question_category_name")
+  questionBatch           String          @map("question_batch")
+  questionIsDeleted       Boolean         @default(false) @map("question_is_deleted")
+  responseValue           Json            @map("response_value")
+  numericRating           Decimal?        @map("numeric_rating") @db.Decimal(4, 2)
+  batch                   String
+  submittedAt             DateTime        @map("submitted_at")
+  formDeleted             Boolean         @default(false) @map("form_deleted")
+  isDeleted               Boolean         @default(false) @map("is_deleted")
+  createdAt               DateTime        @default(now()) @map("created_at")
+  updatedAt               DateTime        @updatedAt @map("updated_at")
+  answer                  FeedbackAnswer? @relation(fields: [answerId], references: [id], onDelete: SetNull)
+
+  @@index([isDeleted, academicYearId, departmentId, semesterId, divisionId])
+  @@index([isDeleted, subjectId, academicYearId])
+  @@index([isDeleted, facultyId, academicYearId])
+  @@index([isDeleted, divisionId, academicYearId])
+  @@index([formId, questionId])
+  @@index([submittedAt])
+  @@map("feedback_snapshots")
+}
+
+model FeedbackAnalytics {
+  id                  String            @id @default(uuid())
+  subjectAllocationId String            @map("subject_allocation_id")
+  academicYearId      String            @map("academic_year_id")
+  averageRating       Float             @map("average_rating")
+  responseCount       Int               @map("response_count")
+  completionRate      Float             @map("completion_rate")
+  calculatedAt        DateTime          @map("calculated_at")
+  isDeleted           Boolean           @default(false) @map("is_deleted")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+  subjectAllocation   SubjectAllocation @relation(fields: [subjectAllocationId], references: [id], onDelete: Cascade)
+  academicYear        AcademicYear      @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+
+  @@unique([subjectAllocationId, academicYearId])
+  @@index([academicYearId, isDeleted])
+  @@map("feedback_analytics")
+}
+
+model AnalyticsView {
+  id              String   @id @default(uuid())
+  viewName        String   @map("view_name")
+  queryDefinition String   @map("query_definition")
+  parameters      Json
+  isDeleted       Boolean  @default(false) @map("is_deleted")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("analytics_views")
+}
+
+model CustomReport {
+  id           String   @id @default(uuid())
+  reportName   String   @map("report_name")
+  description  String
+  reportConfig Json     @map("report_config")
+  isActive     Boolean  @default(true) @map("is_active")
+  isDeleted    Boolean  @default(false) @map("is_deleted")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("custom_reports")
+}
+
+model DivisionTimetable {
+  id            String   @id @default(uuid())
+  divisionId    String   @unique @map("division_id")
+  timetableData Json     @map("timetable_data")
+  isDeleted     Boolean  @default(false) @map("is_deleted")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  division      Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  @@map("division_timetables")
+}
+
+model PromotionHistory {
+  id             String   @id @default(uuid())
+  studentId      String   @map("student_id")
+  fromSemesterId String   @map("from_semester_id")
+  toSemesterId   String   @map("to_semester_id")
+  promotedAt     DateTime @default(now()) @map("promoted_at")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  fromSemester   Semester @relation("FromSemester", fields: [fromSemesterId], references: [id], onDelete: Restrict)
+  toSemester     Semester @relation("ToSemester", fields: [toSemesterId], references: [id], onDelete: Restrict)
+
+  @@index([studentId, promotedAt])
+  @@map("promotion_history")
+}
+
+enum SubjectType {
+  MANDATORY
+  ELECTIVE
+}
+
+enum LectureType {
+  LECTURE
+  LAB
+  TUTORIAL
+  SEMINAR
+  PROJECT
+}
+
+enum FormStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum Designation {
+  SUPER_ADMIN
+  HOD
+  AsstProf
+  LabAsst
+}
+
+enum SemesterTypeEnum {
+  ODD
+  EVEN
+}
+
+enum OtpPurpose {
+  AUTH
+  PASSWORD_RESET
+}
