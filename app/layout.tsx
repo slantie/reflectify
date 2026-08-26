@@ -1,5 +1,6 @@
 import { Geist_Mono, DM_Sans } from "next/font/google"
 import type { Metadata, Viewport } from "next"
+import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
 import { ToastProvider } from "@/components/toast-provider"
@@ -112,6 +113,7 @@ export default function RootLayout({
             <ToastProvider />
           </TooltipProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )
