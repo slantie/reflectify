@@ -27,12 +27,12 @@ export function UploadWorkspace({
 }) {
   return (
     <Tabs defaultValue="matrix" className="space-y-5">
-      <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-xl bg-muted/70 p-1">
-        <TabsTrigger value="matrix" className="gap-2 py-2.5">
+      <TabsList className="grid h-auto w-full group-data-horizontal/tabs:h-auto grid-cols-2 gap-2 rounded-xl bg-muted/70 p-1">
+        <TabsTrigger value="matrix" className="h-auto gap-2 py-2.5">
           <FileArrowUpIcon className="size-4" />
           Faculty Matrix
         </TabsTrigger>
-        <TabsTrigger value="data" className="gap-2 py-2.5">
+        <TabsTrigger value="data" className="h-auto gap-2 py-2.5">
           <GraduationCapIcon className="size-4" />
           Academic data
         </TabsTrigger>
@@ -102,14 +102,14 @@ function SpreadsheetCard({
         <div className="flex justify-between gap-3">
           <div className="flex gap-2">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Icon className="size-5" weight="fill" />
-          </div>
-          <div>
-            <p className="font-medium">{title}</p>
-            <p className="mt-1 text-sm leading-5 text-muted-foreground">
-              {description}
-            </p>
-          </div>
+              <Icon className="size-5" weight="fill" />
+            </div>
+            <div>
+              <p className="font-medium">{title}</p>
+              <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                {description}
+              </p>
+            </div>
           </div>
           <Button
             variant="outline"

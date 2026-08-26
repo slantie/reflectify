@@ -1,0 +1,521 @@
+/* Quantize — pure-CSS 5x5 dot-matrix loader.
+   Each cell activates at a fixed scattered point in the cycle, holds once the
+   grid is full, then every dot resets together before looping.
+   Only opacity and transform animate, so frames stay on the compositor. */
+
+.grid {
+  display: grid;
+  width: fit-content;
+}
+
+.dot {
+  width: var(--q-dot);
+  height: var(--q-dot);
+  border-radius: calc(var(--q-dot) / 2);
+  background: var(--color-dot, currentColor);
+  opacity: 0.18;
+  transform: scale(0.75);
+  animation-duration: var(--q-cycle);
+  animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  animation-iteration-count: infinite;
+}
+
+.c0 {
+  animation-name: q0;
+}
+.c1 {
+  animation-name: q1;
+}
+.c2 {
+  animation-name: q2;
+}
+.c3 {
+  animation-name: q3;
+}
+.c4 {
+  animation-name: q4;
+}
+.c5 {
+  animation-name: q5;
+}
+.c6 {
+  animation-name: q6;
+}
+.c7 {
+  animation-name: q7;
+}
+.c8 {
+  animation-name: q8;
+}
+.c9 {
+  animation-name: q9;
+}
+.c10 {
+  animation-name: q10;
+}
+.c11 {
+  animation-name: q11;
+}
+.c12 {
+  animation-name: q12;
+}
+.c13 {
+  animation-name: q13;
+}
+.c14 {
+  animation-name: q14;
+}
+.c15 {
+  animation-name: q15;
+}
+.c16 {
+  animation-name: q16;
+}
+.c17 {
+  animation-name: q17;
+}
+.c18 {
+  animation-name: q18;
+}
+.c19 {
+  animation-name: q19;
+}
+.c20 {
+  animation-name: q20;
+}
+.c21 {
+  animation-name: q21;
+}
+.c22 {
+  animation-name: q22;
+}
+.c23 {
+  animation-name: q23;
+}
+.c24 {
+  animation-name: q24;
+}
+
+/* Activation order is shuffled so the fill reads as random while staying
+   deterministic across renders. Each dot fades in over an 11% window; the
+   full grid holds to 94%, then all dots ease back down in unison. */
+
+@keyframes q0 {
+  0%,
+  41.3% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  52.3%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q1 {
+  0%,
+  8.7% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  19.7%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q2 {
+  0%,
+  62.9% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  73.9%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q3 {
+  0%,
+  23.5% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  34.5%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q4 {
+  0%,
+  74.2% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  85.2%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q5 {
+  0%,
+  55.6% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  66.6%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q6 {
+  0%,
+  30.1% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  41.1%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q7 {
+  0%,
+  3.4% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  14.4%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q8 {
+  0%,
+  47.8% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  58.8%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q9 {
+  0%,
+  15.9% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  26.9%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q10 {
+  0%,
+  20.2% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  31.2%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q11 {
+  0%,
+  70.5% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  81.5%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q12 {
+  0%,
+  36.7% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  47.7%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q13 {
+  0%,
+  58.3% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  69.3%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q14 {
+  0%,
+  26.4% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  37.4%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q15 {
+  0%,
+  66.1% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  77.1%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q16 {
+  0%,
+  11.2% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  22.2%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q17 {
+  0%,
+  51.4% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  62.4%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q18 {
+  0%,
+  43.9% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  54.9%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q19 {
+  0%,
+  78.8% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  89.8%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q20 {
+  0%,
+  33% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  44%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q21 {
+  0%,
+  82.6% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  93.6%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q22 {
+  0%,
+  17.5% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  28.5%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q23 {
+  0%,
+  60.7% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  71.7%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+@keyframes q24 {
+  0%,
+  5.1% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+  16.1%,
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.75);
+  }
+}
+
+/* Reduced motion collapses everything to a single soft pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation-name: q-pulse;
+    animation-timing-function: ease-in-out;
+    animation-duration: 1.6s;
+  }
+}
+
+@keyframes q-pulse {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 1;
+  }
+}

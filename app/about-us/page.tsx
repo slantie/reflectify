@@ -8,20 +8,16 @@ import {
   EnvelopeSimpleIcon,
   GithubLogoIcon,
   LinkedinLogoIcon,
+  QuotesIcon,
   SparkleIcon,
   UsersThreeIcon,
 } from "@phosphor-icons/react/dist/ssr"
 
+import { PublicFooter } from "@/components/public-footer"
 import { PublicHeader } from "@/components/public-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 
 export const metadata = {
   title: "About us | Reflectify",
@@ -32,9 +28,7 @@ export const metadata = {
 const team = [
   {
     name: "Kandarp Gajjar",
-    role: "Full-stack developer",
-    focus: "Product experience and analytics",
-    bio: "Shapes the frontend systems and insight workflows that turn complex academic operations into a calm, useful workspace.",
+    bio: "Built the backend that powers Reflectify — data models, feedback workflows, and the services behind every response.",
     image: "/team/kandarp-gajjar.jpeg",
     imagePosition: "object-center",
     github: "https://github.com/slantie/",
@@ -43,9 +37,7 @@ const team = [
   },
   {
     name: "Harsh Dodiya",
-    role: "Full-stack developer",
-    focus: "Backend architecture and reliability",
-    bio: "Builds the dependable data and service foundations that support large-scale feedback collection and academic workflows.",
+    bio: "Owns the system architecture and deployment. Keeps the platform dependable, scalable, and shipping smoothly.",
     image: "/team/harsh-dodiya.jpg",
     imagePosition: "object-[center_30%]",
     github: "https://github.com/HarshDodiya1/",
@@ -54,9 +46,7 @@ const team = [
   },
   {
     name: "Parin Dave",
-    role: "Full-stack developer",
-    focus: "Data processing and platform systems",
-    bio: "Focuses on data infrastructure and the robust processing pipelines behind Reflectify’s academic intelligence.",
+    bio: "Crafted the Reflectify UI — the interfaces students and faculty use every day, from feedback forms to analytics views.",
     image: "/team/parin-dave.png",
     imagePosition: "object-[center_22%]",
     github: "https://github.com/ParinDave/",
@@ -65,87 +55,140 @@ const team = [
   },
 ]
 
+const facts = [
+  { value: "3", label: "Builders" },
+  { value: "2025", label: "First cycle" },
+  { value: "LDRP ITR", label: "Home institute" },
+]
+
+const principles = [
+  {
+    icon: UsersThreeIcon,
+    title: "Student voice",
+    description:
+      "A focused, mobile-friendly response experience that respects students' time.",
+  },
+  {
+    icon: ChartLineUpIcon,
+    title: "Useful insight",
+    description:
+      "Structured feedback that helps academic teams identify patterns, not just collect scores.",
+  },
+  {
+    icon: CheckCircleIcon,
+    title: "Operational clarity",
+    description:
+      "One connected workflow for academic data, forms, timetables, and follow-through.",
+  },
+]
+
 export default function AboutUsPage() {
   return (
     <main className="min-h-svh overflow-hidden bg-muted/30">
       <PublicHeader />
 
-      <section className="relative mx-auto w-full px-4 py-10 sm:px-6 sm:py-14">
-        <div className="absolute -top-32 -right-40 size-96 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute top-80 -left-48 size-96 rounded-full bg-amber-300/15 blur-3xl" />
+      <section className="relative mx-auto w-full px-4 py-12 sm:px-6 sm:py-16">
+        <div
+          aria-hidden
+          className="absolute -top-32 -right-40 size-96 rounded-full bg-primary/10 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="absolute top-80 -left-48 size-96 rounded-full bg-amber-300/15 blur-3xl"
+        />
 
         <div className="relative">
-          <Badge variant="secondary" className="gap-1.5">
-            <SparkleIcon weight="fill" />
+          <p className="font-mono text-xs font-medium tracking-widest text-muted-foreground uppercase">
+            {"// about us"}
+          </p>
+          <Badge
+            variant="secondary"
+            className="mt-4 gap-1.5 border-border/60 px-3 py-1 shadow-sm"
+          >
+            <SparkleIcon weight="fill" className="size-3.5 text-primary" />
             Built at LDRP Institute of Technology and Research
           </Badge>
-          <h1 className="mt-6 max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-6xl">
-            Better feedback begins with a clearer system.
+          <h1 className="mt-6 max-w-4xl text-4xl leading-[1.08] font-semibold tracking-[-0.04em] text-balance sm:text-6xl">
+            Better feedback begins with a{" "}
+            <span className="bg-gradient-to-r from-primary to-chart-3 bg-clip-text text-transparent">
+              clearer system.
+            </span>
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
             Reflectify is an academic feedback workspace built to make student
             voice easier to collect, safer to manage, and more useful to act on.
           </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <Principle
-              icon={UsersThreeIcon}
-              title="Student voice"
-              description="A focused, mobile-friendly response experience that respects students’ time."
-            />
-            <Principle
-              icon={ChartLineUpIcon}
-              title="Useful insight"
-              description="Structured feedback that helps academic teams identify patterns, not just collect scores."
-            />
-            <Principle
-              icon={CheckCircleIcon}
-              title="Operational clarity"
-              description="One connected workflow for academic data, forms, timetables, and follow-through."
-            />
+          <div className="mt-9 flex flex-wrap gap-x-10 gap-y-5">
+            {facts.map((fact) => (
+              <div key={fact.label}>
+                <p className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {fact.value}
+                </p>
+                <p className="mt-0.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  {fact.label}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="border-y bg-background/70">
-        <div className="mx-auto w-full px-4 py-10 sm:px-6 sm:py-14">
+        <div className="mx-auto w-full px-4 py-12 sm:px-6 sm:py-16">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium text-primary">
-              The people behind it
+            <p className="font-mono text-xs font-medium tracking-widest text-muted-foreground uppercase">
+              {"// what we believe"}
             </p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-              A small team with a practical point of view.
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Principles before features.
             </h2>
-            <p className="mt-3 leading-7 text-muted-foreground">
-              We believe academic tools should feel considered: straightforward
-              for administrators and frictionless for students.
-            </p>
           </div>
 
-          <div className="mt-9 grid gap-4 md:grid-cols-3">
-            {team.map((member) => (
-              <Card key={member.name} className="shadow-sm">
-                <div className="relative aspect-square overflow-hidden bg-muted">
+          <div className="mt-9 grid gap-4 sm:grid-cols-3">
+            {principles.map((principle) => (
+              <Principle key={principle.title} {...principle} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full px-4 py-12 sm:px-6 sm:py-16">
+        <div className="max-w-2xl">
+          <p className="font-mono text-xs font-medium tracking-widest text-muted-foreground uppercase">
+            {"// the people behind it"}
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            A small team with a practical point of view.
+          </h2>
+          <p className="mt-3 leading-7 text-muted-foreground">
+            We believe academic tools should feel considered: straightforward
+            for administrators and frictionless for students.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {team.map((member) => (
+            <Card key={member.name} className="shadow-sm">
+              <CardContent className="p-5">
+                <div className="relative mx-auto aspect-square w-full max-w-[300px] overflow-hidden rounded-xl bg-muted">
                   <Image
                     src={member.image}
                     alt={member.name}
                     fill
-                    sizes="(min-width: 768px) 33vw, 100vw"
+                    sizes="(min-width: 768px) 300px, 100vw"
                     className={`object-cover ${member.imagePosition}`}
                   />
-                  <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-card/70 to-transparent" />
                 </div>
-                <CardHeader>
-                  <CardTitle>{member.name}</CardTitle>
-                  <CardDescription>
-                    {member.role} · {member.focus}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-1 flex-col">
-                  <p className="leading-6 text-muted-foreground">
+                <div className="mt-5 text-center">
+                  <p className="font-semibold">{member.name}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    Full Stack Developer
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {member.bio}
                   </p>
-                  <div className="mt-6 flex items-center gap-2">
+                  <div className="mt-4 flex items-center justify-center gap-2">
                     <Button
                       variant="outline"
                       size="icon-sm"
@@ -186,24 +229,25 @@ export default function AboutUsPage() {
                       <EnvelopeSimpleIcon />
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
-      <section className="mx-auto w-full px-4 py-10 sm:px-6 sm:py-14">
-        <Card className="overflow-hidden border-primary/15 bg-primary text-primary-foreground shadow-lg shadow-primary/15">
-          <CardContent className="grid gap-6 p-6 sm:p-8 md:grid-cols-[1fr_auto] md:items-center">
+      <section className="mx-auto w-full px-4 pb-16 sm:px-6">
+        <Card className="overflow-hidden border-primary/15 border-transparent bg-gradient-to-br from-primary to-chart-4 shadow-lg shadow-primary/15">
+          <CardContent className="grid gap-6 p-6 sm:p-10 md:grid-cols-[auto_1fr_auto] md:items-center">
+            <QuotesIcon
+              weight="fill"
+              className="hidden size-10 text-primary-foreground/40 md:block"
+            />
             <div>
-              <p className="text-sm font-medium text-primary-foreground/75">
-                Our principle
-              </p>
-              <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-balance text-primary-foreground sm:text-3xl">
                 Transparency is not a feature. It is the foundation.
               </h2>
-              <p className="mt-4 max-w-2xl leading-7 text-primary-foreground/80">
+              <p className="mt-3 max-w-2xl leading-7 text-primary-foreground/75">
                 We are building a feedback process where students can be heard
                 and academic teams can respond with clarity.
               </p>
@@ -220,6 +264,8 @@ export default function AboutUsPage() {
           </CardContent>
         </Card>
       </section>
+
+      <PublicFooter />
     </main>
   )
 }
@@ -234,7 +280,7 @@ function Principle({
   description: string
 }) {
   return (
-    <Card className="border-primary/10 bg-background/80 shadow-sm">
+    <Card className="border-primary/10 bg-background/80 shadow-sm transition-colors hover:border-primary/25">
       <CardContent className="p-5">
         <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="size-5" weight="fill" />
